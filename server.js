@@ -106,7 +106,10 @@ async function readAllResponses() {
     .select("payload")
     .order("submitted_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.error("Supabase read failed:", error.message, error.details || "", error.hint || "");
+    throw error;
+  }
   return (data || []).map((row) => row.payload);
 }
 
@@ -124,7 +127,10 @@ async function saveResponse(entry) {
     payload: entry,
   });
 
-  if (error) throw error;
+  if (error) {
+    console.error("Supabase insert failed:", error.message, error.details || "", error.hint || "");
+    throw error;
+  }
 }
 
 function resolveStaticPath(urlPath) {
@@ -263,9 +269,11 @@ if (!useSupabase) ensureDataDir();
 server.listen(PORT, () => {
   console.log(`Survey (public):  http://localhost:${PORT}`);
   console.log(`Admin dashboard:    http://localhost:${PORT}/admin`);
-  console.log(
-    useSupabase
-      ? "Response storage:   Supabase"
-      : "Response storage:   local file (data/responses.jsonl)"
-  );
+  if (useSupabase) {
+    console.log("Response storage:   Supabase (table: survey_responses)");
+  } else {
+    console.warn(
+      "Response storage:   local file only — set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on Render for production"
+    );
+  }
 });
