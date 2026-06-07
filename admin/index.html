@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swing AI Survey — Admin</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <header class="admin-header">
+      <div>
+        <div class="logo">Swing AI Survey</div>
+        <h1>Response dashboard</h1>
+        <p class="subtitle">Responses appear here after participants press Submit.</p>
+      </div>
+    </header>
+
+    <section id="dashboardSection">
+      <div class="toolbar">
+        <div class="stats" id="statsText">0 responses</div>
+        <div class="toolbar-actions">
+          <button type="button" class="btn btn-secondary" id="refreshBtn">Refresh</button>
+          <button type="button" class="btn btn-primary" id="exportAllBtn">Export all (JSON)</button>
+        </div>
+      </div>
+      <div id="responsesList" class="responses-list"></div>
+      <p class="empty-state" id="emptyState" hidden>No submissions yet.</p>
+    </section>
+  </div>
+
+  <script src="/admin/config.js"></script>
+  <script src="/admin/admin.js"></script>
+</body>
+</html>

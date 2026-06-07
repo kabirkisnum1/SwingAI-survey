@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swing AI Survey</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="survey-container">
+    <header class="survey-header">
+      <div class="logo">Swing AI Survey</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">Step 1 of 14</div>
+    </header>
+
+    <main id="surveyMain">
+      <!-- Pages rendered by app.js -->
+    </main>
+
+    <footer class="survey-footer">
+      <button type="button" class="btn btn-secondary" id="prevBtn" disabled>Back</button>
+      <button type="button" class="btn btn-primary" id="nextBtn">Next</button>
+    </footer>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
