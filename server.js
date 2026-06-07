@@ -9,16 +9,30 @@
  *
  * Env:
  *   PORT — default 3000
+ *   SUPABASE_URL — Supabase project URL (production persistence)
+ *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only, never expose to clients)
+ *
+ * When SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are both set, responses are stored in
+ * Supabase. Otherwise responses fall back to data/responses.jsonl (local dev).
  */
 
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { createClient } = require("@supabase/supabase-js");
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const RESPONSES_FILE = path.join(ROOT, "data", "responses.jsonl");
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_TABLE = "survey_responses";
+const useSupabase = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+
+const supabase = useSupabase
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  : null;
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -67,7 +81,7 @@ function setCors(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-function readAllResponses() {
+function readAllResponsesLocal() {
   if (!fs.existsSync(RESPONSES_FILE)) return [];
   return fs
     .readFileSync(RESPONSES_FILE, "utf8")
@@ -82,6 +96,35 @@ function readAllResponses() {
     })
     .filter(Boolean)
     .reverse();
+}
+
+async function readAllResponses() {
+  if (!useSupabase) return readAllResponsesLocal();
+
+  const { data, error } = await supabase
+    .from(SUPABASE_TABLE)
+    .select("payload")
+    .order("submitted_at", { ascending: false });
+
+  if (error) throw error;
+  return (data || []).map((row) => row.payload);
+}
+
+async function saveResponse(entry) {
+  if (!useSupabase) {
+    ensureDataDir();
+    fs.appendFileSync(RESPONSES_FILE, JSON.stringify(entry) + "\n");
+    return;
+  }
+
+  const { error } = await supabase.from(SUPABASE_TABLE).insert({
+    id: entry.id,
+    received_at: entry.receivedAt,
+    submitted_at: entry.submittedAt,
+    payload: entry,
+  });
+
+  if (error) throw error;
 }
 
 function resolveStaticPath(urlPath) {
@@ -177,17 +220,27 @@ async function handleApi(req, res, urlPath) {
         submittedAt: body.submittedAt || new Date().toISOString(),
       };
 
-      ensureDataDir();
-      fs.appendFileSync(RESPONSES_FILE, JSON.stringify(entry) + "\n");
+      await saveResponse(entry);
       jsonResponse(res, 200, { ok: true, id: entry.id });
-    } catch {
-      jsonResponse(res, 400, { error: "Invalid JSON" });
+    } catch (err) {
+      if (err instanceof SyntaxError || err.message === "Invalid JSON") {
+        jsonResponse(res, 400, { error: "Invalid JSON" });
+        return;
+      }
+      console.error("POST /api/responses failed:", err);
+      jsonResponse(res, 500, { error: "Failed to save response" });
     }
     return;
   }
 
   if (req.method === "GET" && urlPath === "/api/responses") {
-    jsonResponse(res, 200, readAllResponses());
+    try {
+      const responses = await readAllResponses();
+      jsonResponse(res, 200, responses);
+    } catch (err) {
+      console.error("GET /api/responses failed:", err);
+      jsonResponse(res, 500, { error: "Failed to load responses" });
+    }
     return;
   }
 
@@ -206,8 +259,13 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res, resolveStaticPath(urlPath));
 });
 
-ensureDataDir();
+if (!useSupabase) ensureDataDir();
 server.listen(PORT, () => {
   console.log(`Survey (public):  http://localhost:${PORT}`);
   console.log(`Admin dashboard:    http://localhost:${PORT}/admin`);
+  console.log(
+    useSupabase
+      ? "Response storage:   Supabase"
+      : "Response storage:   local file (data/responses.jsonl)"
+  );
 });
