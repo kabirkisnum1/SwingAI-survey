@@ -3,30 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Swing AI Survey — Admin</title>
+  <title>Swing AI Survey — Coach Feedback</title>
   <link rel="stylesheet" href="/admin/admin.css">
 </head>
 <body>
   <div class="admin-container">
     <header class="admin-header">
-      <div>
+      <div class="header-brand">
         <div class="logo">Swing AI Survey</div>
-        <h1>Response dashboard</h1>
-        <p class="subtitle">Responses appear here after participants press Submit.</p>
+        <h1>Coach feedback</h1>
+        <p class="subtitle">See what coaches submitted after they finish the survey and press <strong>Submit responses</strong>.</p>
+      </div>
+      <div class="header-badge" aria-hidden="true">
+        <span class="badge-icon">📋</span>
       </div>
     </header>
 
-    <section id="dashboardSection">
+    <section class="stats-row" id="statsRow" hidden>
+      <article class="stat-card">
+        <span class="stat-label">Total responses</span>
+        <span class="stat-value" id="statCount">0</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Latest submission</span>
+        <span class="stat-value stat-value-sm" id="statLatest">—</span>
+      </article>
+    </section>
+
+    <section id="dashboardSection" class="dashboard card">
       <div class="toolbar">
-        <div class="stats" id="statsText">0 responses</div>
+        <div class="search-wrap">
+          <label class="visually-hidden" for="searchInput">Search by coach name</label>
+          <input type="search" id="searchInput" placeholder="Search by coach name…" autocomplete="off" />
+        </div>
         <div class="toolbar-actions">
-          <button type="button" class="btn btn-secondary" id="refreshBtn">Refresh</button>
-          <button type="button" class="btn btn-primary" id="exportAllBtn">Export all (JSON)</button>
+          <button type="button" class="btn btn-secondary" id="refreshBtn">
+            <span class="btn-icon" aria-hidden="true">↻</span>
+            Check for new responses
+          </button>
         </div>
       </div>
+
+      <p class="loading-state" id="loadingState">Loading responses…</p>
+      <p class="error-message" id="errorMessage" hidden></p>
+
       <div id="responsesList" class="responses-list"></div>
-      <p class="empty-state" id="emptyState" hidden>No submissions yet.</p>
+
+      <div class="empty-state" id="emptyState" hidden>
+        <div class="empty-icon" aria-hidden="true">⛳</div>
+        <h2>No responses yet</h2>
+        <p>When a coach completes the survey, their answers will show up here. Share the survey link — not this page.</p>
+      </div>
     </section>
+
+    <section class="advanced card" id="advancedSection">
+      <button type="button" class="advanced-toggle" id="advancedToggle" aria-expanded="false">
+        <span>Advanced options</span>
+        <span class="chevron" aria-hidden="true">›</span>
+      </button>
+      <div class="advanced-panel" id="advancedPanel" hidden>
+        <p class="advanced-hint">For backups or technical use. Most people can ignore this section.</p>
+        <div class="advanced-actions">
+          <button type="button" class="btn btn-ghost" id="exportAllBtn">Download all responses (.json)</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="admin-footer">
+      <p>Tip: Click a coach’s name to expand their full feedback. Use <strong>Check for new responses</strong> after someone tells you they submitted.</p>
+    </footer>
   </div>
 
   <script src="/admin/config.js"></script>
