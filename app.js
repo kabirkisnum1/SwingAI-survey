@@ -1,15 +1,10 @@
 const SWING_COUNT = 6;
 
-// Update these paths when you upload media files.
 // Place videos in assets/videos/  (e.g. swing-1.mp4, swing-2.mp4, ...)
-// Place images in assets/images/  (e.g. swing-1-results.jpeg, swing-2-results.jpeg, ...)
+// App-detected faults: edit faults.js (one list per swing)
 const MEDIA = {
   videos: Array.from({ length: SWING_COUNT }, (_, i) => ({
     src: `assets/videos/swing-${i + 1}.mp4`,
-  })),
-  images: Array.from({ length: SWING_COUNT }, (_, i) => ({
-    src: `assets/images/swing-${i + 1}-results.jpeg`,
-    alt: `App-detected faults for swing ${i + 1}`,
   })),
 };
 
@@ -26,34 +21,144 @@ let pages = [];
 
 const responses = loadResponses();
 
+const FAULT_RESPONSES = [
+  { value: "agree", label: "Agree" },
+  { value: "disagree", label: "Disagree" },
+  { value: "error", label: "Error in fault" },
+];
+
+function normalizeFaultResponse(response) {
+  if (response === "yes") return "agree";
+  if (response === "no") return "disagree";
+  return response;
+}
+
+function normalizeSwing(swing, swingIndex) {
+  const faultCount = (APP_FAULTS[swingIndex] || []).length;
+
+  if (!swing.faultRatings) swing.faultRatings = [];
+  while (swing.faultRatings.length < faultCount) {
+    swing.faultRatings.push({ response: null });
+  }
+  swing.faultRatings.length = faultCount;
+
+  swing.faultRatings.forEach((rating) => {
+    if (rating.response) rating.response = normalizeFaultResponse(rating.response);
+  });
+
+  if (swing.additionalThoughts === undefined) {
+    swing.additionalThoughts = swing.feedback || "";
+  }
+}
+
+function ensureSwingData(swingIndex) {
+  normalizeSwing(responses.swings[swingIndex], swingIndex);
+}
+
 function loadResponses() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const data = JSON.parse(saved);
       while (data.swings.length < SWING_COUNT) {
-        data.swings.push({ observedFaults: "", feedback: "" });
+        data.swings.push({ observedFaults: "", feedback: "", faultRatings: [], additionalThoughts: "" });
       }
       if (data.submittedAt === undefined) data.submittedAt = null;
+      data.swings.forEach((swing, i) => normalizeSwing(swing, i));
       return data;
     }
   } catch {
     // Ignore corrupt storage
   }
-  return {
+  const data = {
     startedAt: new Date().toISOString(),
     participant: { name: "", position: "" },
     swings: Array.from({ length: SWING_COUNT }, () => ({
       observedFaults: "",
       feedback: "",
+      faultRatings: [],
+      additionalThoughts: "",
     })),
     completedAt: null,
     submittedAt: null,
   };
+  data.swings.forEach((swing, i) => normalizeSwing(swing, i));
+  return data;
 }
 
 function saveResponses() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderAppFaults(swingIndex, swingNum) {
+  const faults = APP_FAULTS[swingIndex] || [];
+  ensureSwingData(swingIndex);
+  const ratings = responses.swings[swingIndex].faultRatings;
+
+  if (faults.length === 0) {
+    return `<div class="faults-panel"><p class="faults-empty">No faults listed for this swing yet.</p></div>`;
+  }
+
+  const items = faults
+    .map((fault, fi) => {
+      const options = FAULT_RESPONSES.map(({ value, label }) => {
+        const checked = ratings[fi]?.response === value ? "checked" : "";
+        return `
+          <label class="rating-pill rating-${value}">
+            <input type="radio" name="fault-${swingNum}-${fi}" value="${value}" ${checked} />
+            <span>${label}</span>
+          </label>`;
+      }).join("");
+
+      return `
+        <li class="fault-card">
+          <div class="fault-main">
+            <span class="fault-index">${fi + 1}</span>
+            <div class="fault-content">
+              <span class="fault-name">${escapeHtml(fault.name)}</span>
+              <span class="fault-desc">${escapeHtml(fault.description)}</span>
+            </div>
+          </div>
+          <fieldset class="fault-rating" aria-label="Rating for ${escapeHtml(fault.name)}">
+            ${options}
+          </fieldset>
+        </li>`;
+    })
+    .join("");
+
+  return `
+    <div class="faults-panel">
+      <div class="faults-header">
+        <span class="faults-header-fault">Detected fault</span>
+        <span class="faults-header-rating">Your rating</span>
+      </div>
+      <ul class="faults-list">${items}</ul>
+    </div>`;
+}
+
+function collectAppFaultPage(swingIndex, swingNum) {
+  const faults = APP_FAULTS[swingIndex] || [];
+  ensureSwingData(swingIndex);
+
+  faults.forEach((fault, fi) => {
+    const selected = document.querySelector(`input[name="fault-${swingNum}-${fi}"]:checked`);
+    responses.swings[swingIndex].faultRatings[fi] = {
+      name: fault.name,
+      response: selected ? selected.value : null,
+    };
+  });
+
+  responses.swings[swingIndex].additionalThoughts =
+    document.getElementById(`additionalThoughts-${swingNum}`).value.trim();
+  saveResponses();
 }
 
 function buildPages() {
@@ -121,7 +226,6 @@ function buildPages() {
   for (let i = 0; i < SWING_COUNT; i++) {
     const swingNum = i + 1;
     const video = MEDIA.videos[i];
-    const image = MEDIA.images[i];
 
     // Page 1: Observed faults + video
     pages.push({
@@ -159,7 +263,7 @@ function buildPages() {
       },
     });
 
-    // Page 2: App-detected faults + image + feedback
+    // Page 2: App-detected faults + feedback
     pages.push({
       id: `swing-${swingNum}-app-faults`,
       swingIndex: i,
@@ -167,23 +271,30 @@ function buildPages() {
         <div class="page active" data-page="swing-${swingNum}-app-faults">
           <span class="swing-badge">Swing ${swingNum} of ${SWING_COUNT}</span>
           <h1 class="page-title">The faults the app found were:</h1>
-          <p class="page-subtitle">Review what our AI detected for this swing.</p>
+          <p class="page-subtitle">Rate each fault the app detected for this swing.</p>
 
-          <div class="media-container">
-            <img src="${image.src}" alt="${image.alt}" />
-          </div>
+          ${renderAppFaults(i, swingNum)}
 
           <div class="form-group">
-            <label for="feedback-${swingNum}">Any feedback / critiques?</label>
-            <textarea id="feedback-${swingNum}" placeholder="How accurate was the app's analysis? Anything it missed or got wrong?">${escapeHtml(responses.swings[i].feedback)}</textarea>
-            <p class="form-hint">Optional — skip if you have nothing to add.</p>
+            <label for="additionalThoughts-${swingNum}">Additional thoughts</label>
+            <textarea id="additionalThoughts-${swingNum}" class="additional-thoughts" placeholder="Anything else about this swing's analysis?">${escapeHtml(responses.swings[i].additionalThoughts || "")}</textarea>
+            <p class="form-hint">Optional</p>
           </div>
+          <div class="error-message" id="faultRatingError-${swingNum}">Please rate each fault (Agree, Disagree, or Error in fault).</div>
         </div>
       `,
-      collect: () => {
-        responses.swings[i].feedback = document.getElementById(`feedback-${swingNum}`).value.trim();
-        saveResponses();
+      validate: () => {
+        collectAppFaultPage(i, swingNum);
+        const faults = APP_FAULTS[i] || [];
+        const validValues = FAULT_RESPONSES.map((r) => r.value);
+        const allAnswered = faults.every((_, fi) => {
+          const selected = document.querySelector(`input[name="fault-${swingNum}-${fi}"]:checked`);
+          return selected && validValues.includes(selected.value);
+        });
+        document.getElementById(`faultRatingError-${swingNum}`).classList.toggle("visible", !allAnswered);
+        return allAnswered;
       },
+      collect: () => collectAppFaultPage(i, swingNum),
     });
   }
 
@@ -234,14 +345,6 @@ function buildPages() {
       document.getElementById("submitBtn").onclick = submitResponses;
     },
   });
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function renderPage(index) {
