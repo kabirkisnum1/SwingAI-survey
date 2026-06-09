@@ -211,6 +211,8 @@ function buildPages() {
       if (valid) {
         responses.participant.name = name;
         responses.participant.position = position;
+        // Fresh run from welcome — allow a new server submission even if this device submitted before.
+        responses.submittedAt = null;
         saveResponses();
       }
       return valid;
@@ -317,8 +319,8 @@ function buildPages() {
       return `
         <div class="page active" data-page="complete">
           <div class="complete-message">
-            <h2>Review & submit</h2>
-            <p class="page-subtitle">Your answers are saved on this device. When you're ready, submit them to send your responses.</p>
+            <h2>Almost done!</h2>
+            <p class="page-subtitle">Review your details below, then tap <strong>Submit responses</strong> at the bottom of the screen to send your feedback to us.</p>
 
             <div class="card submit-summary">
               <p><strong>${escapeHtml(responses.participant.name || "Participant")}</strong></p>
@@ -326,10 +328,7 @@ function buildPages() {
               <p class="submit-meta">${SWING_COUNT} swings completed</p>
             </div>
 
-            <div class="submit-actions">
-              <button type="button" class="btn btn-primary" id="submitBtn">Submit responses</button>
-              <button type="button" class="btn btn-secondary" id="downloadBtn">Download a copy (JSON)</button>
-            </div>
+            <button type="button" class="btn btn-secondary btn-link-style" id="downloadBtn">Download a copy for your records</button>
             <p class="status-message" id="submitStatus" hidden></p>
           </div>
         </div>
@@ -342,7 +341,6 @@ function buildPages() {
       if (responses.submittedAt) return;
 
       document.getElementById("downloadBtn").onclick = downloadResponses;
-      document.getElementById("submitBtn").onclick = submitResponses;
     },
   });
 }
@@ -363,9 +361,27 @@ function updateProgress(index) {
 }
 
 function updateNavButtons(index) {
+  const isLast = index === pages.length - 1;
+  const submitted = Boolean(responses.submittedAt);
+
   prevBtn.disabled = index === 0;
-  nextBtn.textContent = index === pages.length - 1 ? "Finish" : "Next";
-  nextBtn.style.display = index === pages.length - 1 ? "none" : "inline-block";
+  prevBtn.style.display = isLast && submitted ? "none" : "inline-block";
+
+  if (isLast && submitted) {
+    nextBtn.style.display = "none";
+    return;
+  }
+
+  if (isLast) {
+    nextBtn.textContent = "Submit responses";
+    nextBtn.style.display = "inline-block";
+    nextBtn.disabled = false;
+    return;
+  }
+
+  nextBtn.textContent = "Next";
+  nextBtn.style.display = "inline-block";
+  nextBtn.disabled = false;
 }
 
 function goToPage(index) {
@@ -387,13 +403,16 @@ function downloadResponses() {
 const SUBMIT_API = (window.SURVEY_CONFIG && window.SURVEY_CONFIG.apiUrl) || "/api/responses";
 
 async function submitResponses() {
-  const submitBtn = document.getElementById("submitBtn");
+  const submitBtn = nextBtn;
   const statusEl = document.getElementById("submitStatus");
 
   submitBtn.disabled = true;
-  statusEl.hidden = false;
-  statusEl.className = "status-message";
-  statusEl.textContent = "Submitting…";
+  submitBtn.textContent = "Submitting…";
+  if (statusEl) {
+    statusEl.hidden = false;
+    statusEl.className = "status-message";
+    statusEl.textContent = "Sending your responses…";
+  }
 
   try {
     const res = await fetch(SUBMIT_API, {
@@ -410,10 +429,14 @@ async function submitResponses() {
     responses.submittedAt = new Date().toISOString();
     saveResponses();
     renderPage(currentPage);
+    updateNavButtons(currentPage);
   } catch (err) {
-    statusEl.className = "status-message status-error";
-    statusEl.textContent = err.message || "Could not submit. Check your connection and try again.";
+    if (statusEl) {
+      statusEl.className = "status-message status-error";
+      statusEl.textContent = err.message || "Could not submit. Check your connection and try again.";
+    }
     submitBtn.disabled = false;
+    submitBtn.textContent = "Submit responses";
   }
 }
 
@@ -426,6 +449,11 @@ nextBtn.addEventListener("click", () => {
 
   if (page.validate && !page.validate()) return;
   if (page.collect) page.collect();
+
+  if (currentPage === pages.length - 1) {
+    if (!responses.submittedAt) submitResponses();
+    return;
+  }
 
   if (currentPage < pages.length - 1) {
     goToPage(currentPage + 1);
