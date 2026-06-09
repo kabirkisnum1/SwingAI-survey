@@ -382,14 +382,10 @@ function buildPages() {
       return `
         <div class="page active" data-page="complete">
           <div class="complete-message">
-            <h2>Almost done!</h2>
-            <p class="page-subtitle">Review your details below, then tap <strong>Submit responses</strong> at the bottom of the screen to send your feedback to us.</p>
-
-            <div class="card submit-summary">
-              <p><strong>${escapeHtml(responses.participant.name || "Participant")}</strong></p>
-              <p class="submit-meta">${escapeHtml(responses.participant.position || "")}</p>
-              <p class="submit-meta">${SWING_COUNT} swings completed</p>
-            </div>
+            <div class="complete-icon">✓</div>
+            <h2>Thank you!</h2>
+            <p>You've finished all ${SWING_COUNT} swings — we really appreciate your time and expertise.</p>
+            <p class="page-subtitle">Tap <strong>Submit responses</strong> below when you're ready to send your feedback to us.</p>
 
             <button type="button" class="btn btn-secondary btn-link-style" id="downloadBtn">Download a copy for your records</button>
             <p class="status-message" id="submitStatus" hidden></p>
