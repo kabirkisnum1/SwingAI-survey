@@ -116,22 +116,74 @@ function getFilteredResponses() {
   });
 }
 
+const RATING_LABELS = {
+  agree: "Agree",
+  disagree: "Disagree",
+  error: "Error in fault",
+  yes: "Agree",
+  no: "Disagree",
+};
+
+const RATING_CLASSES = {
+  agree: "rating-badge-agree",
+  disagree: "rating-badge-disagree",
+  error: "rating-badge-error",
+  yes: "rating-badge-agree",
+  no: "rating-badge-disagree",
+};
+
+function renderFaultRatings(swing) {
+  const ratings = swing.faultRatings || [];
+
+  if (ratings.length === 0) {
+    return '<p class="field-value muted">No app fault ratings recorded</p>';
+  }
+
+  return `
+    <ul class="admin-fault-list">
+      ${ratings
+        .map((rating) => {
+          const response = rating.response;
+          const label = RATING_LABELS[response] || "Not rated";
+          const badgeClass = RATING_CLASSES[response] || "rating-badge-none";
+          const errorBlock =
+            response === "error" && rating.errorExplanation?.trim()
+              ? `<p class="admin-error-expl"><span class="admin-error-label">Fault definition issue:</span> ${escapeHtml(rating.errorExplanation.trim())}</p>`
+              : response === "error"
+                ? '<p class="admin-error-expl muted">No explanation provided</p>'
+                : "";
+
+          return `
+            <li class="admin-fault-item">
+              <div class="admin-fault-head">
+                <span class="admin-fault-name">${escapeHtml(rating.name || "Fault")}</span>
+                <span class="rating-badge ${badgeClass}">${escapeHtml(label)}</span>
+              </div>
+              ${errorBlock}
+            </li>`;
+        })
+        .join("")}
+    </ul>`;
+}
+
 function renderSwingBlock(swing, index) {
-  const faults = swing.observedFaults?.trim() || "";
-  const feedback = swing.feedback?.trim() || "";
-  const faultsDisplay = faults || '<em class="muted">No faults noted</em>';
-  const feedbackDisplay = feedback || '<em class="muted">No feedback provided</em>';
+  const observed = swing.observedFaults?.trim() || "";
+  const additional = (swing.additionalThoughts || swing.feedback || "").trim();
 
   return `
     <article class="swing-block">
       <h4 class="swing-title">Swing ${index + 1}</h4>
       <div class="field-block">
         <span class="field-label">Faults they observed</span>
-        <p class="field-value">${faults ? escapeHtml(faults) : faultsDisplay}</p>
+        <p class="field-value">${observed ? escapeHtml(observed) : '<em class="muted">None listed</em>'}</p>
       </div>
       <div class="field-block">
-        <span class="field-label">Feedback on the app</span>
-        <p class="field-value">${feedback ? escapeHtml(feedback) : feedbackDisplay}</p>
+        <span class="field-label">App-detected faults — their ratings</span>
+        ${renderFaultRatings(swing)}
+      </div>
+      <div class="field-block">
+        <span class="field-label">Additional thoughts</span>
+        <p class="field-value">${additional ? escapeHtml(additional) : '<em class="muted">None provided</em>'}</p>
       </div>
     </article>
   `;

@@ -437,6 +437,83 @@ body {
   word-break: break-word;
 }
 
+.admin-fault-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-fault-item {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+}
+
+.admin-fault-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-fault-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.rating-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rating-badge-agree {
+  background: var(--accent-light);
+  color: var(--accent-hover);
+  border: 1px solid var(--accent);
+}
+
+.rating-badge-disagree {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #dc2626;
+}
+
+.rating-badge-error {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #d97706;
+}
+
+.rating-badge-none {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+.admin-error-expl {
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+
+.admin-error-label {
+  font-weight: 600;
+  color: #92400e;
+}
+
 .muted {
   color: var(--text-muted);
   font-style: italic;

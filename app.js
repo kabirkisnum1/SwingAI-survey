@@ -38,12 +38,13 @@ function normalizeSwing(swing, swingIndex) {
 
   if (!swing.faultRatings) swing.faultRatings = [];
   while (swing.faultRatings.length < faultCount) {
-    swing.faultRatings.push({ response: null });
+    swing.faultRatings.push({ response: null, errorExplanation: "" });
   }
   swing.faultRatings.length = faultCount;
 
   swing.faultRatings.forEach((rating) => {
     if (rating.response) rating.response = normalizeFaultResponse(rating.response);
+    if (rating.errorExplanation === undefined) rating.errorExplanation = "";
   });
 
   if (swing.additionalThoughts === undefined) {
@@ -118,18 +119,34 @@ function renderAppFaults(swingIndex, swingNum) {
           </label>`;
       }).join("");
 
+      const showErrorExplain = ratings[fi]?.response === "error";
+      const errorExpl = ratings[fi]?.errorExplanation || "";
+
       return `
         <li class="fault-card">
-          <div class="fault-main">
-            <span class="fault-index">${fi + 1}</span>
-            <div class="fault-content">
-              <span class="fault-name">${escapeHtml(fault.name)}</span>
-              <span class="fault-desc">${escapeHtml(fault.description)}</span>
+          <div class="fault-body">
+            <div class="fault-top">
+              <div class="fault-main">
+                <span class="fault-index">${fi + 1}</span>
+                <div class="fault-content">
+                  <span class="fault-name">${escapeHtml(fault.name)}</span>
+                  <span class="fault-desc">${escapeHtml(fault.description)}</span>
+                </div>
+              </div>
+              <fieldset class="fault-rating" aria-label="Rating for ${escapeHtml(fault.name)}">
+                ${options}
+              </fieldset>
+            </div>
+            <div class="fault-error-explain" id="fault-error-wrap-${swingNum}-${fi}" ${showErrorExplain ? "" : "hidden"}>
+              <label for="fault-error-expl-${swingNum}-${fi}">What's wrong with how we've defined this fault?</label>
+              <textarea
+                id="fault-error-expl-${swingNum}-${fi}"
+                class="fault-error-input"
+                placeholder="Explain why this fault description is incorrect, unclear, or not a real fault…"
+              >${escapeHtml(errorExpl)}</textarea>
+              <div class="error-message fault-error-required" id="fault-error-req-${swingNum}-${fi}">Please explain what's wrong with this fault definition.</div>
             </div>
           </div>
-          <fieldset class="fault-rating" aria-label="Rating for ${escapeHtml(fault.name)}">
-            ${options}
-          </fieldset>
         </li>`;
     })
     .join("");
@@ -144,15 +161,37 @@ function renderAppFaults(swingIndex, swingNum) {
     </div>`;
 }
 
+function setupFaultRatingListeners(swingIndex, swingNum) {
+  const faults = APP_FAULTS[swingIndex] || [];
+  faults.forEach((_, fi) => {
+    document.querySelectorAll(`input[name="fault-${swingNum}-${fi}"]`).forEach((radio) => {
+      radio.addEventListener("change", () => {
+        const wrap = document.getElementById(`fault-error-wrap-${swingNum}-${fi}`);
+        const isError = radio.value === "error" && radio.checked;
+        if (wrap) wrap.hidden = !isError;
+        collectAppFaultPage(swingIndex, swingNum);
+      });
+    });
+
+    const errorInput = document.getElementById(`fault-error-expl-${swingNum}-${fi}`);
+    if (errorInput) {
+      errorInput.addEventListener("input", () => collectAppFaultPage(swingIndex, swingNum));
+    }
+  });
+}
+
 function collectAppFaultPage(swingIndex, swingNum) {
   const faults = APP_FAULTS[swingIndex] || [];
   ensureSwingData(swingIndex);
 
   faults.forEach((fault, fi) => {
     const selected = document.querySelector(`input[name="fault-${swingNum}-${fi}"]:checked`);
+    const errorEl = document.getElementById(`fault-error-expl-${swingNum}-${fi}`);
     responses.swings[swingIndex].faultRatings[fi] = {
       name: fault.name,
       response: selected ? selected.value : null,
+      errorExplanation:
+        selected?.value === "error" && errorEl ? errorEl.value.trim() : "",
     };
   });
 
@@ -170,17 +209,28 @@ function buildPages() {
     render: () => `
       <div class="page active" data-page="welcome">
         <h1 class="page-title">Welcome to the Swing AI Survey</h1>
-        <p class="page-subtitle">Help us evaluate how well our swing analysis performs.</p>
+        <p class="page-subtitle">Thank you for taking the time to help us improve our swing analysis.</p>
 
-        <div class="card">
-          <p><strong>What to expect</strong></p>
-          <ul class="overview-list">
-            <li>You will review <strong>${SWING_COUNT} golf swings</strong>, one at a time.</li>
-            <li>For each swing, watch the video and list the faults you see (ideally 2–3).</li>
-            <li>You'll then see the faults our app detected and can share feedback.</li>
-            <li>Use <strong>Next</strong> and <strong>Back</strong> to move between questions.</li>
-            <li>The survey takes roughly 15–20 minutes.</li>
+        <div class="card overview-card">
+          <h2 class="overview-heading">About the app</h2>
+          <p>Our app takes a video of your golf swing and identifies the <strong>top 3 faults</strong> you can work on to improve. We're building toward a fuller coaching experience — including your <strong>strengths</strong>, more <strong>actionable feedback</strong>, and richer analysis over time.</p>
+          <p>We're genuinely thankful for your expertise. Your input as a coach or player helps us make the product more accurate and more useful for real practice.</p>
+        </div>
+
+        <div class="card overview-card">
+          <h2 class="overview-heading">How this survey works</h2>
+          <p>For each of <strong>${SWING_COUNT} swing videos</strong>, you'll:</p>
+          <ol class="overview-steps">
+            <li><strong>Watch the swing</strong> and list the most important faults <em>you</em> see.</li>
+            <li><strong>Review what our app detected</strong> and rate each fault using the options below.</li>
+          </ol>
+          <p class="overview-ratings-title"><strong>What each rating means</strong></p>
+          <ul class="rating-legend">
+            <li><span class="legend-pill legend-agree">Agree</span> — This fault was present in the swing and the app identified it correctly.</li>
+            <li><span class="legend-pill legend-disagree">Disagree</span> — This fault was <strong>not</strong> in the swing; the app flagged something that wasn't there.</li>
+            <li><span class="legend-pill legend-error">Error in fault</span> — The fault itself is poorly defined or isn't a real thing — the description or concept is wrong, not just the detection. You'll be asked to explain what's wrong with how we've defined it.</li>
           </ul>
+          <p class="form-hint">Your answers save automatically as you go. At the end, press <strong>Submit responses</strong> to send them to us. The survey takes roughly 15–20 minutes.</p>
         </div>
 
         <div class="form-group">
@@ -273,7 +323,7 @@ function buildPages() {
         <div class="page active" data-page="swing-${swingNum}-app-faults">
           <span class="swing-badge">Swing ${swingNum} of ${SWING_COUNT}</span>
           <h1 class="page-title">The faults the app found were:</h1>
-          <p class="page-subtitle">Rate each fault the app detected for this swing.</p>
+          <p class="page-subtitle">Rate each fault. Disagree if it wasn't in the swing; Error in fault if the definition itself is wrong.</p>
 
           ${renderAppFaults(i, swingNum)}
 
@@ -289,14 +339,27 @@ function buildPages() {
         collectAppFaultPage(i, swingNum);
         const faults = APP_FAULTS[i] || [];
         const validValues = FAULT_RESPONSES.map((r) => r.value);
-        const allAnswered = faults.every((_, fi) => {
+        let allAnswered = true;
+        let allErrorsExplained = true;
+
+        faults.forEach((_, fi) => {
           const selected = document.querySelector(`input[name="fault-${swingNum}-${fi}"]:checked`);
-          return selected && validValues.includes(selected.value);
+          const answered = selected && validValues.includes(selected.value);
+          if (!answered) allAnswered = false;
+
+          const reqEl = document.getElementById(`fault-error-req-${swingNum}-${fi}`);
+          const errorEl = document.getElementById(`fault-error-expl-${swingNum}-${fi}`);
+          const needsExplain = selected?.value === "error";
+          const explained = !needsExplain || (errorEl && errorEl.value.trim());
+          if (reqEl) reqEl.classList.toggle("visible", needsExplain && !explained);
+          if (needsExplain && !explained) allErrorsExplained = false;
         });
+
         document.getElementById(`faultRatingError-${swingNum}`).classList.toggle("visible", !allAnswered);
-        return allAnswered;
+        return allAnswered && allErrorsExplained;
       },
       collect: () => collectAppFaultPage(i, swingNum),
+      onShow: () => setupFaultRatingListeners(i, swingNum),
     });
   }
 
