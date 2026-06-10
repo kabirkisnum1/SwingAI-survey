@@ -226,9 +226,18 @@ function buildPages() {
           </ol>
           <p class="overview-ratings-title"><strong>What each rating means</strong></p>
           <ul class="rating-legend">
-            <li><span class="legend-pill legend-agree">Agree</span> — This fault was present in the swing and the app identified it correctly.</li>
-            <li><span class="legend-pill legend-disagree">Disagree</span> — This fault was <strong>not</strong> in the swing; the app flagged something that wasn't there.</li>
-            <li><span class="legend-pill legend-error">Error in fault</span> — The fault itself is poorly defined or isn't a real thing — the description or concept is wrong, not just the detection. You'll be asked to explain what's wrong with how we've defined it.</li>
+            <li>
+              <span class="legend-pill legend-agree">Agree</span>
+              <span class="legend-desc">This fault was present in the swing and the app identified it correctly.</span>
+            </li>
+            <li>
+              <span class="legend-pill legend-disagree">Disagree</span>
+              <span class="legend-desc">This fault was <strong>not</strong> in the swing; the app flagged something that wasn't there.</span>
+            </li>
+            <li>
+              <span class="legend-pill legend-error">Error in fault</span>
+              <span class="legend-desc">The fault itself is poorly defined or isn't a real thing — the description or concept is wrong, not just the detection. You'll be asked to explain what's wrong with how we've defined it.</span>
+            </li>
           </ul>
           <p class="form-hint">Your answers save automatically as you go. At the end, press <strong>Submit responses</strong> to send them to us. The survey takes roughly 15–20 minutes.</p>
         </div>
