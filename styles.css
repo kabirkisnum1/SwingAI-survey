@@ -292,11 +292,10 @@ body {
 }
 
 .fault-top {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--space-md);
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: start;
 }
 
 .fault-error-explain {
@@ -367,7 +366,19 @@ body {
 }
 
 .overview-steps li {
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
+  padding-right: 0.15rem;
+}
+
+/* Wrap copy in one element inside flex/grid rows — bare text nodes break layout */
+.step-text,
+.hint-text,
+.legend-desc,
+.prose-text {
+  display: block;
+  min-width: 0;
+  line-height: 1.5;
+  overflow-wrap: break-word;
 }
 
 .overview-ratings-title {
@@ -458,20 +469,22 @@ body {
 }
 
 .fault-rating {
-  border: none;
+  border: 0;
   padding: 0;
   margin: 0;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-xs);
   justify-content: flex-start;
-  flex: 1 1 100%;
-  max-width: 100%;
+  width: 100%;
 }
 
 .rating-pill {
   position: relative;
+  display: inline-flex;
   cursor: pointer;
+  min-width: 0;
 }
 
 .rating-pill input {
@@ -623,17 +636,8 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.response-summary {
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1rem;
-  text-align: left;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 1rem;
+.form-hint {
+  display: block;
 }
 
 .status-message {
@@ -671,17 +675,6 @@ body {
   border: none;
 }
 
-.submit-summary {
-  text-align: left;
-  margin-bottom: 1.25rem;
-}
-
-.submit-meta {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  margin-top: 0.25rem;
-}
-
 .error-message {
   color: var(--danger);
   font-size: 0.85rem;
@@ -693,18 +686,19 @@ body {
   display: block;
 }
 
+@media (min-width: 640px) {
+  .fault-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+}
+
 @media (max-width: 900px) {
   .faults-header {
     display: none;
   }
 
-  .fault-top {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .fault-rating {
-    width: 100%;
     padding-top: var(--space-xs);
     border-top: 1px dashed var(--border);
   }

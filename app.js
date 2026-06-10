@@ -221,8 +221,8 @@ function buildPages() {
           <h2 class="overview-heading">How this survey works</h2>
           <p>For each of <strong>${SWING_COUNT} swing videos</strong>, you'll:</p>
           <ol class="overview-steps">
-            <li><strong>Watch the swing</strong> and list the most important faults <em>you</em> see.</li>
-            <li><strong>Review what our app detected</strong> and rate each fault using the options below.</li>
+            <li><span class="step-text"><strong>Watch the swing</strong> and list the most important faults <em>you</em> see.</span></li>
+            <li><span class="step-text"><strong>Review what our app detected</strong> and rate each fault using the options below.</span></li>
           </ol>
           <p class="overview-ratings-title"><strong>What each rating means</strong></p>
           <ul class="rating-legend">
@@ -239,7 +239,7 @@ function buildPages() {
               <span class="legend-desc">The fault itself is poorly defined or isn't a real thing — the description or concept is wrong, not just the detection. You'll be asked to explain what's wrong with how we've defined it.</span>
             </li>
           </ul>
-          <p class="form-hint">Your answers save automatically as you go. At the end, press <strong>Submit responses</strong> to send them to us. The survey takes roughly 15–20 minutes.</p>
+          <p class="form-hint"><span class="hint-text">Your answers save automatically as you go. At the end, press <strong>Submit responses</strong> to send them to us. The survey takes roughly 15–20 minutes.</span></p>
         </div>
 
         <div class="form-group">
@@ -394,7 +394,7 @@ function buildPages() {
             <div class="complete-icon">✓</div>
             <h2>Thank you!</h2>
             <p>You've finished all ${SWING_COUNT} swings — we really appreciate your time and expertise.</p>
-            <p class="page-subtitle">Tap <strong>Submit responses</strong> below when you're ready to send your feedback to us.</p>
+            <p class="page-subtitle"><span class="hint-text">Tap <strong>Submit responses</strong> below when you're ready to send your feedback to us.</span></p>
 
             <button type="button" class="btn btn-secondary btn-link-style" id="downloadBtn">Download a copy for your records</button>
             <p class="status-message" id="submitStatus" hidden></p>

@@ -148,9 +148,9 @@ function renderFaultRatings(swing) {
           const badgeClass = RATING_CLASSES[response] || "rating-badge-none";
           const errorBlock =
             response === "error" && rating.errorExplanation?.trim()
-              ? `<p class="admin-error-expl"><span class="admin-error-label">Fault definition issue:</span> ${escapeHtml(rating.errorExplanation.trim())}</p>`
+              ? `<p class="admin-error-expl"><span class="admin-error-label">Fault definition issue:</span><span class="admin-error-text">${escapeHtml(rating.errorExplanation.trim())}</span></p>`
               : response === "error"
-                ? '<p class="admin-error-expl muted">No explanation provided</p>'
+                ? '<p class="admin-error-expl muted"><span class="admin-error-text">No explanation provided</span></p>'
                 : "";
 
           return `
