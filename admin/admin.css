@@ -451,6 +451,12 @@ body {
   margin-bottom: 0.55rem;
 }
 
+.swing-source {
+  font-weight: 500;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
 .field-block + .field-block {
   margin-top: 0.55rem;
   padding-top: 0.55rem;

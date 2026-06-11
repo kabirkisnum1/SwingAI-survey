@@ -1,14 +1,10 @@
-const SWING_COUNT = 6;
-
-// Place videos in assets/videos/  (e.g. swing-1.mp4, swing-2.mp4, ...)
-// App-detected faults: edit faults.js (one list per swing)
-const MEDIA = {
-  videos: Array.from({ length: SWING_COUNT }, (_, i) => ({
-    src: `assets/videos/swing-${i + 1}.mp4`,
-  })),
-};
+const DEFAULT_SWING_COUNT = 10;
+let SWING_COUNT = DEFAULT_SWING_COUNT;
+let APP_FAULTS = [];
+let MEDIA = { videos: [] };
 
 const STORAGE_KEY = "swingai_survey_responses";
+const DEVICE_KEY = "swingai_survey_device_id";
 
 const surveyMain = document.getElementById("surveyMain");
 const prevBtn = document.getElementById("prevBtn");
@@ -56,35 +52,95 @@ function ensureSwingData(swingIndex) {
   normalizeSwing(responses.swings[swingIndex], swingIndex);
 }
 
+function emptySwing(clipMeta = {}) {
+  return {
+    clipId: clipMeta.clipId || null,
+    source: clipMeta.source || null,
+    clipLabel: clipMeta.clipLabel || null,
+    observedFaults: "",
+    feedback: "",
+    faultRatings: [],
+    additionalThoughts: "",
+  };
+}
+
 function loadResponses() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const data = JSON.parse(saved);
-      while (data.swings.length < SWING_COUNT) {
-        data.swings.push({ observedFaults: "", feedback: "", faultRatings: [], additionalThoughts: "" });
-      }
       if (data.submittedAt === undefined) data.submittedAt = null;
-      data.swings.forEach((swing, i) => normalizeSwing(swing, i));
+      if (!data.sessionId) data.sessionId = null;
+      if (!Array.isArray(data.swings)) data.swings = [];
       return data;
     }
   } catch {
     // Ignore corrupt storage
   }
-  const data = {
+  return {
     startedAt: new Date().toISOString(),
+    sessionId: null,
     participant: { name: "", position: "" },
-    swings: Array.from({ length: SWING_COUNT }, () => ({
-      observedFaults: "",
-      feedback: "",
-      faultRatings: [],
-      additionalThoughts: "",
-    })),
+    swings: [],
     completedAt: null,
     submittedAt: null,
   };
-  data.swings.forEach((swing, i) => normalizeSwing(swing, i));
-  return data;
+}
+
+function applySession(session) {
+  SWING_COUNT = session.swingCount;
+  APP_FAULTS = session.swings.map((s) =>
+    s.faults.map((f) => ({ name: f.name, description: f.description }))
+  );
+  MEDIA = {
+    videos: session.swings.map((s) => ({ src: s.videoUrl })),
+  };
+
+  responses.sessionId = session.sessionId;
+
+  const merged = session.swings.map((clip, i) => {
+    const prev =
+      responses.swings.find((sw) => sw.clipId && sw.clipId === clip.clipId) ||
+      responses.swings[i] ||
+      emptySwing();
+    return {
+      ...emptySwing({
+        clipId: clip.clipId,
+        source: clip.source,
+        clipLabel: clip.id,
+      }),
+      observedFaults: prev.observedFaults || "",
+      feedback: prev.feedback || "",
+      faultRatings: prev.faultRatings || [],
+      additionalThoughts: prev.additionalThoughts || "",
+    };
+  });
+
+  responses.swings = merged;
+  responses.swings.forEach((swing, i) => normalizeSwing(swing, i));
+  saveResponses();
+}
+
+function getDeviceId() {
+  let id = localStorage.getItem(DEVICE_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(DEVICE_KEY, id);
+  }
+  return id;
+}
+
+async function loadSurveySession() {
+  const deviceId = getDeviceId();
+  const params = new URLSearchParams({ deviceId });
+  if (responses.sessionId) params.set("sessionId", responses.sessionId);
+
+  const res = await fetch(`/api/session?${params}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Could not load survey videos");
+  }
+  return res.json();
 }
 
 function saveResponses() {
@@ -239,7 +295,7 @@ function buildPages() {
               <span class="legend-desc">The fault itself is poorly defined or isn't a real thing — the description or concept is wrong, not just the detection. You'll be asked to explain what's wrong with how we've defined it.</span>
             </li>
           </ul>
-          <p class="form-hint"><span class="hint-text">Your answers save automatically as you go. At the end, press <strong>Submit responses</strong> to send them to us. The survey takes roughly 15–20 minutes.</span></p>
+          <p class="form-hint"><span class="hint-text">Your answers save automatically as you go. At the end, press <strong>Submit responses</strong> to send them to us. The survey takes roughly 25–35 minutes.</span></p>
         </div>
 
         <div class="form-group">
@@ -528,5 +584,26 @@ nextBtn.addEventListener("click", () => {
   }
 });
 
-buildPages();
-renderPage(currentPage);
+async function initSurvey() {
+  surveyMain.innerHTML = `<div class="page active"><p class="page-subtitle">Loading your survey videos…</p></div>`;
+  nextBtn.disabled = true;
+  prevBtn.disabled = true;
+
+  try {
+    const session = await loadSurveySession();
+    applySession(session);
+    buildPages();
+    renderPage(currentPage);
+    nextBtn.disabled = false;
+  } catch (err) {
+    surveyMain.innerHTML = `
+      <div class="page active">
+        <h2 class="page-title">Could not start survey</h2>
+        <p class="page-subtitle">${escapeHtml(err.message)}</p>
+        <button type="button" class="btn btn-primary" id="retrySurveyBtn">Try again</button>
+      </div>`;
+    document.getElementById("retrySurveyBtn").onclick = () => initSurvey();
+  }
+}
+
+initSurvey();

@@ -21,6 +21,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
+const surveySession = require("./lib/surveySession");
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
@@ -250,12 +251,51 @@ async function handleApi(req, res, urlPath) {
     return;
   }
 
+  if (req.method === "GET" && urlPath === "/api/session") {
+    try {
+      const query = new URL(req.url, "http://localhost").searchParams;
+      const deviceId = query.get("deviceId") || "";
+      const sessionId = query.get("sessionId") || "";
+      const session = surveySession.getOrCreateSession(deviceId, sessionId);
+      jsonResponse(res, 200, surveySession.publicSession(session));
+    } catch (err) {
+      console.error("GET /api/session failed:", err);
+      jsonResponse(res, 500, { error: err.message || "Failed to create survey session" });
+    }
+    return;
+  }
+
   res.writeHead(404);
   res.end("Not found");
 }
 
+function serveMedia(req, res, urlPath) {
+  const rest = urlPath.replace(/^\/api\/media\//, "");
+  const slash = rest.indexOf("/");
+  if (slash === -1) {
+    res.writeHead(404);
+    res.end("Not found");
+    return;
+  }
+
+  const mediaSource = rest.slice(0, slash);
+  const mediaId = decodeURIComponent(rest.slice(slash + 1));
+  const filePath = surveySession.resolveMediaPath(mediaSource, mediaId);
+  if (!filePath) {
+    res.writeHead(404);
+    res.end("Not found");
+    return;
+  }
+  serveStatic(req, res, filePath);
+}
+
 const server = http.createServer(async (req, res) => {
   const urlPath = req.url.split("?")[0];
+
+  if (urlPath.startsWith("/api/media/")) {
+    serveMedia(req, res, urlPath);
+    return;
+  }
 
   if (urlPath.startsWith("/api/")) {
     await handleApi(req, res, urlPath);

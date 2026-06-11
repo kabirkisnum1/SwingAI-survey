@@ -172,7 +172,7 @@ function renderSwingBlock(swing, index) {
 
   return `
     <article class="swing-block">
-      <h4 class="swing-title">Swing ${index + 1}</h4>
+      <h4 class="swing-title">Swing ${index + 1}${swing.clipId ? ` <span class="swing-source">(${escapeHtml(swing.source || "")}: ${escapeHtml(swing.clipLabel || swing.clipId)})</span>` : ""}</h4>
       <div class="field-block">
         <span class="field-label">Faults they observed</span>
         <p class="field-value">${observed ? escapeHtml(observed) : '<em class="muted">None listed</em>'}</p>

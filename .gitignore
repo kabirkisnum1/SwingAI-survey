@@ -1,3 +1,5 @@
 node_modules/
 .env
 data/responses.jsonl
+data/clip_usage.json
+data/sessions/
