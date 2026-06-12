@@ -6,8 +6,10 @@ Videos live in `data/media/` (~12 GB HQ after `bundle-media`, ~1 GB after `compr
 
 Media is tracked with **Git LFS** (see `.gitattributes`). After bundling:
 
+Requires `GOLFDB_REPO_ROOT` (default `~/golfdb-master`) for `trim-swings` — uses `swing_segmenter.pt` + MediaPipe on **reddit clips only** (golfdb/og stay as bundled). Pose 105-d features are cached under `data/pose_features/reddit/`; progress in `data/trim_progress.json`.
+
 ```bash
-npm run prepare-survey-github   # build catalog, copy clips, compress for web
+npm run prepare-survey-github
 git lfs install
 git add .gitattributes data/media/
 git commit -m "Add survey media via Git LFS"

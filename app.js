@@ -7,6 +7,7 @@ const STORAGE_KEY = "swingai_survey_responses";
 const DEVICE_KEY = "swingai_survey_device_id";
 
 const surveyMain = document.getElementById("surveyMain");
+const videoPool = document.getElementById("videoPool");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const progressFill = document.getElementById("progressFill");
@@ -14,6 +15,7 @@ const progressText = document.getElementById("progressText");
 
 let currentPage = 0;
 let pages = [];
+let pooledVideos = [];
 
 const responses = loadResponses();
 
@@ -153,6 +155,94 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function destroyVideoPool() {
+  pooledVideos.forEach((video) => {
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+  });
+  pooledVideos = [];
+  if (videoPool) videoPool.innerHTML = "";
+}
+
+function buildVideoPool() {
+  destroyVideoPool();
+  if (!videoPool) return;
+
+  MEDIA.videos.forEach((entry, index) => {
+    const video = document.createElement("video");
+    video.id = `survey-video-${index}`;
+    video.preload = "auto";
+    video.playsInline = true;
+    video.muted = true;
+    video.setAttribute("data-swing-index", String(index));
+    video.src = entry.src;
+    videoPool.appendChild(video);
+    pooledVideos.push(video);
+  });
+}
+
+function prefetchAllVideos(onProgress) {
+  if (!pooledVideos.length) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    let loaded = 0;
+    const total = pooledVideos.length;
+
+    const markLoaded = () => {
+      loaded += 1;
+      if (onProgress) onProgress(loaded, total);
+      if (loaded >= total) resolve();
+    };
+
+    pooledVideos.forEach((video) => {
+      if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+        markLoaded();
+        return;
+      }
+
+      const onReady = () => {
+        video.removeEventListener("error", onError);
+        markLoaded();
+      };
+
+      const onError = () => {
+        video.removeEventListener("canplaythrough", onReady);
+        reject(new Error("Could not load a survey video. Check your connection and try again."));
+      };
+
+      video.addEventListener("canplaythrough", onReady, { once: true });
+      video.addEventListener("error", onError, { once: true });
+      video.load();
+    });
+  });
+}
+
+function parkAllSwingVideos() {
+  if (!videoPool) return;
+
+  pooledVideos.forEach((video) => {
+    if (video.parentElement !== videoPool) {
+      video.pause();
+      video.controls = false;
+      video.muted = true;
+      videoPool.appendChild(video);
+    }
+  });
+}
+
+function mountSwingVideo(swingIndex) {
+  const swingNum = swingIndex + 1;
+  const mount = document.getElementById(`mediaMount-${swingNum}`);
+  const video = pooledVideos[swingIndex];
+  if (!mount || !video) return;
+
+  parkAllSwingVideos();
+  video.muted = false;
+  video.controls = true;
+  mount.appendChild(video);
 }
 
 function renderAppFaults(swingIndex, swingNum) {
@@ -342,7 +432,6 @@ function buildPages() {
   // Swing pages (2 pages per swing)
   for (let i = 0; i < SWING_COUNT; i++) {
     const swingNum = i + 1;
-    const video = MEDIA.videos[i];
 
     // Page 1: Observed faults + video
     pages.push({
@@ -354,9 +443,7 @@ function buildPages() {
           <h1 class="page-title">List the faults that you see in this swing</h1>
           <p class="page-subtitle">Ideally 2–3 faults. Be as specific as you can.</p>
 
-          <div class="media-container">
-            <video controls preload="metadata" playsinline src="${video.src}"></video>
-          </div>
+          <div class="media-container" id="mediaMount-${swingNum}" aria-label="Swing ${swingNum} video"></div>
 
           <div class="form-group">
             <label for="observedFaults-${swingNum}">Faults you observed</label>
@@ -378,6 +465,7 @@ function buildPages() {
         responses.swings[i].observedFaults = document.getElementById(`observedFaults-${swingNum}`).value.trim();
         saveResponses();
       },
+      onShow: () => mountSwingVideo(i),
     });
 
     // Page 2: App-detected faults + feedback
@@ -510,6 +598,7 @@ function updateNavButtons(index) {
 
 function goToPage(index) {
   if (pages[currentPage].collect) pages[currentPage].collect();
+  parkAllSwingVideos();
   currentPage = index;
   renderPage(currentPage);
 }
@@ -592,10 +681,15 @@ async function initSurvey() {
   try {
     const session = await loadSurveySession();
     applySession(session);
+    buildVideoPool();
+    await prefetchAllVideos((loaded, total) => {
+      console.log(`[survey] cached videos ${loaded}/${total}`);
+    });
     buildPages();
     renderPage(currentPage);
     nextBtn.disabled = false;
   } catch (err) {
+    destroyVideoPool();
     surveyMain.innerHTML = `
       <div class="page active">
         <h2 class="page-title">Could not start survey</h2>

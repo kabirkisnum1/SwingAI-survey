@@ -1199,33 +1199,6 @@
         ]
       },
       {
-        "id": "1szj0ca_1_5_months_since_I_first_swung_a_club_1_5_months_since_I_fir_cut",
-        "source": "reddit",
-        "videoRef": "$SURVER/data/media/reddit/1szj0ca_1_5_months_since_I_first_swung_a_club_1_5_months_since_I_fir_cut.mp4",
-        "numericId": null,
-        "player": null,
-        "faults": [
-          {
-            "fault_id": "address_spine_tilt_excessive",
-            "name": "Excessive spine tilt",
-            "description": "The golfer's spine is either too vertical (upright) or excessively bent over (hunched) at address, compromising rotational ability and balance.",
-            "phase": "address"
-          },
-          {
-            "fault_id": "finish_unbalanced",
-            "name": "Unbalanced finish",
-            "description": "The golfer is unable to hold their final pose at the finish, stumbling or stepping out of the swing due to poor dynamic balance.",
-            "phase": "finish"
-          },
-          {
-            "fault_id": "follow_through_weight_trail",
-            "name": "Incomplete transfer",
-            "description": "The majority of the golfer's weight remains trapped on the trail foot well past impact during the follow-through.",
-            "phase": "follow_through"
-          }
-        ]
-      },
-      {
         "id": "1t96kug_Rate_my_swing_out_of_5_Rate_my_swing_out_of_5_cut",
         "source": "reddit",
         "videoRef": "$SURVER/data/media/reddit/1t96kug_Rate_my_swing_out_of_5_Rate_my_swing_out_of_5_cut.mp4",
@@ -25181,16 +25154,18 @@
     ]
   },
   "counts": {
-    "reddit": 77,
+    "reddit": 76,
     "og": 6,
     "golfdb": 849
   },
   "bundledAt": "2026-06-12T00:00:23.477Z",
   "mediaRoot": "data/media",
   "mediaCompressed": true,
-  "mediaCompressedAt": "2026-06-12T00:08:23.265Z",
+  "mediaCompressedAt": "2026-06-12T01:50:31.041Z",
   "mediaCompress": {
     "maxWidth": 720,
     "crf": 28
-  }
+  },
+  "swingTrimmedAt": "2026-06-12T01:50:21.205584+00:00",
+  "redditTrimOnly": true
 }

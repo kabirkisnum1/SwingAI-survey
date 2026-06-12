@@ -168,6 +168,10 @@ function serveStatic(req, res, filePath) {
 
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME[ext] || "application/octet-stream";
+    const isSurveyMedia = filePath.includes(`${path.sep}data${path.sep}media${path.sep}`);
+    const cacheHeader = isSurveyMedia
+      ? { "Cache-Control": "public, max-age=31536000, immutable" }
+      : {};
     const total = stat.size;
     const range = req.headers.range;
 
@@ -188,6 +192,7 @@ function serveStatic(req, res, filePath) {
           "Accept-Ranges": "bytes",
           "Content-Length": end - start + 1,
           "Content-Type": contentType,
+          ...cacheHeader,
         });
         fs.createReadStream(filePath, { start, end }).pipe(res);
         return;
@@ -198,6 +203,7 @@ function serveStatic(req, res, filePath) {
       "Content-Type": contentType,
       "Content-Length": total,
       "Accept-Ranges": "bytes",
+      ...cacheHeader,
     });
     fs.createReadStream(filePath).pipe(res);
   });

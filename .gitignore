@@ -3,3 +3,6 @@ node_modules/
 data/responses.jsonl
 data/clip_usage.json
 data/sessions/
+data/pose_features/
+data/trim_progress.json
+data/excluded_clips.json

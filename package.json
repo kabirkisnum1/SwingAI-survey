@@ -8,8 +8,9 @@
     "build-catalog": "node scripts/build_survey_catalog.js",
     "bundle-media": "node scripts/bundle_survey_media.js",
     "compress-media": "node scripts/compress_survey_media.js",
+    "trim-swings": "python3 scripts/trim_survey_swings.py",
     "prepare-survey": "npm run build-catalog && npm run bundle-media",
-    "prepare-survey-github": "npm run prepare-survey && npm run compress-media"
+    "prepare-survey-github": "npm run build-catalog && npm run bundle-media && TRIM_SOURCES=reddit npm run trim-swings && npm run compress-media"
   },
   "engines": {
     "node": ">=18"
