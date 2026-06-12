@@ -3,3 +3,4 @@ node_modules/
 data/responses.jsonl
 data/clip_usage.json
 data/sessions/
+data/media/
