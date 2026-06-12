@@ -5,4 +5,10 @@ data/clip_usage.json
 data/sessions/
 data/pose_features/
 data/trim_progress.json
+data/partials/
 data/excluded_clips.json
+data/reddit_numbered_vl/
+data/reddit_selected_vl/
+data/reddit_numbered/.frames*
+data/reddit_selected/.frames*
+scripts/__pycache__/

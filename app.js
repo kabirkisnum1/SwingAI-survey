@@ -1,4 +1,4 @@
-const DEFAULT_SWING_COUNT = 10;
+const DEFAULT_SWING_COUNT = 6;
 let SWING_COUNT = DEFAULT_SWING_COUNT;
 let APP_FAULTS = [];
 let MEDIA = { videos: [] };
@@ -73,6 +73,7 @@ function loadResponses() {
       const data = JSON.parse(saved);
       if (data.submittedAt === undefined) data.submittedAt = null;
       if (!data.sessionId) data.sessionId = null;
+      if (!data.catalogVersion) data.catalogVersion = null;
       if (!Array.isArray(data.swings)) data.swings = [];
       return data;
     }
@@ -82,6 +83,7 @@ function loadResponses() {
   return {
     startedAt: new Date().toISOString(),
     sessionId: null,
+    catalogVersion: null,
     participant: { name: "", position: "" },
     swings: [],
     completedAt: null,
@@ -98,27 +100,43 @@ function applySession(session) {
     videos: session.swings.map((s) => ({ src: s.videoUrl })),
   };
 
-  responses.sessionId = session.sessionId;
+  const catalogVersion = session.catalogVersion || null;
+  const versionChanged = catalogVersion && responses.catalogVersion !== catalogVersion;
 
-  const merged = session.swings.map((clip, i) => {
-    const prev =
-      responses.swings.find((sw) => sw.clipId && sw.clipId === clip.clipId) ||
-      responses.swings[i] ||
-      emptySwing();
-    return {
-      ...emptySwing({
-        clipId: clip.clipId,
-        source: clip.source,
-        clipLabel: clip.id,
-      }),
-      observedFaults: prev.observedFaults || "",
-      feedback: prev.feedback || "",
-      faultRatings: prev.faultRatings || [],
-      additionalThoughts: prev.additionalThoughts || "",
-    };
-  });
+  if (versionChanged) {
+    responses.sessionId = session.sessionId;
+    responses.catalogVersion = catalogVersion;
+    responses.participant = { name: "", position: "" };
+    responses.submittedAt = null;
+    responses.completedAt = null;
+    responses.swings = session.swings.map((clip) =>
+      emptySwing({ clipId: clip.clipId, source: clip.source, clipLabel: clip.id })
+    );
+  } else {
+    responses.sessionId = session.sessionId;
+    responses.catalogVersion = catalogVersion;
 
-  responses.swings = merged;
+    const merged = session.swings.map((clip, i) => {
+      const prev =
+        responses.swings.find((sw) => sw.clipId && sw.clipId === clip.clipId) ||
+        responses.swings[i] ||
+        emptySwing();
+      return {
+        ...emptySwing({
+          clipId: clip.clipId,
+          source: clip.source,
+          clipLabel: clip.id,
+        }),
+        observedFaults: prev.observedFaults || "",
+        feedback: prev.feedback || "",
+        faultRatings: prev.faultRatings || [],
+        additionalThoughts: prev.additionalThoughts || "",
+      };
+    });
+
+    responses.swings = merged;
+  }
+
   responses.swings.forEach((swing, i) => normalizeSwing(swing, i));
   saveResponses();
 }
@@ -147,6 +165,35 @@ async function loadSurveySession() {
 
 function saveResponses() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
+  queueServerProgressSave();
+}
+
+let progressSaveTimer = null;
+function queueServerProgressSave() {
+  if (!responses.sessionId || responses.submittedAt) return;
+  if (progressSaveTimer) clearTimeout(progressSaveTimer);
+  progressSaveTimer = setTimeout(async () => {
+    try {
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(responses),
+      });
+    } catch {
+      // Offline — localStorage still has progress
+    }
+  }, 400);
+}
+
+async function loadServerProgress(sessionId) {
+  if (!sessionId) return null;
+  try {
+    const res = await fetch(`/api/progress?sessionId=${encodeURIComponent(sessionId)}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 function escapeHtml(str) {
@@ -680,6 +727,15 @@ async function initSurvey() {
 
   try {
     const session = await loadSurveySession();
+    if (responses.sessionId === session.sessionId && !responses.submittedAt) {
+      const serverProgress = await loadServerProgress(session.sessionId);
+      if (serverProgress?.swings?.length) {
+        responses.participant = serverProgress.participant || responses.participant;
+        responses.swings = serverProgress.swings;
+        responses.startedAt = serverProgress.startedAt || responses.startedAt;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
+      }
+    }
     applySession(session);
     buildVideoPool();
     await prefetchAllVideos((loaded, total) => {

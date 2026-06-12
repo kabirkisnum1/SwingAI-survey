@@ -6,9 +6,12 @@
   "scripts": {
     "start": "node server.js",
     "build-catalog": "node scripts/build_survey_catalog.js",
+    "build-selected-catalog": "node scripts/build_selected_catalog.js",
     "bundle-media": "node scripts/bundle_survey_media.js",
     "compress-media": "node scripts/compress_survey_media.js",
     "trim-swings": "python3 scripts/trim_survey_swings.py",
+    "vl-curate-reddit": "python3 scripts/vl_curate_reddit_numbered.py",
+    "vl-curate-selected": "python3 scripts/vl_curate_reddit_numbered.py --input-dir data/reddit_selected --output-dir data/reddit_selected_vl --fresh",
     "prepare-survey": "npm run build-catalog && npm run bundle-media",
     "prepare-survey-github": "npm run build-catalog && npm run bundle-media && TRIM_SOURCES=reddit npm run trim-swings && npm run compress-media"
   },

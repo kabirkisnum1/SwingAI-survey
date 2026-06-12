@@ -1,0 +1,473 @@
+{
+  "catalogVersion": "selected-pool-v1",
+  "clips": [
+    {
+      "poolNumber": 1,
+      "previousNumber": 1,
+      "id": "1ow5rxg_rate_my_swingrate_my_swing_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1ow5rxg_rate_my_swingrate_my_swing_cut.mp4",
+      "faults": [
+        "Forearm roll",
+        "Lead heel lift",
+        "Hands flip"
+      ]
+    },
+    {
+      "poolNumber": 2,
+      "previousNumber": 2,
+      "id": "1ox1tsw_Rate_my_swingRate_my_swing_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1ox1tsw_Rate_my_swingRate_my_swing_cut.mp4",
+      "faults": [
+        "Hands flip",
+        "Head backs away",
+        "No wrist hinge"
+      ]
+    },
+    {
+      "poolNumber": 3,
+      "previousNumber": 3,
+      "id": "1plbms4_HelpHelp_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1plbms4_HelpHelp_cut.mp4",
+      "faults": [
+        "Weight on toes",
+        "Forearm roll",
+        "Lack of rotation"
+      ]
+    },
+    {
+      "poolNumber": 4,
+      "previousNumber": 4,
+      "id": "1prju08_Rate_my_swing_Rate_my_swing_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1prju08_Rate_my_swing_Rate_my_swing_cut.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Forearm roll",
+        "Knee flex issues"
+      ]
+    },
+    {
+      "poolNumber": 5,
+      "previousNumber": 5,
+      "id": "1q7vs49_Rate_my_friends_swing_him_and_guess_handicap_Rate_my_friends_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1q7vs49_Rate_my_friends_swing_him_and_guess_handicap_Rate_my_friends_cut.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Forearm roll",
+        "Shoulders vs feet"
+      ]
+    },
+    {
+      "poolNumber": 6,
+      "previousNumber": 6,
+      "id": "1qbev04_Rate_my_swingRate_my_swing_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1qbev04_Rate_my_swingRate_my_swing_cut.mp4",
+      "faults": [
+        "Head lift or dip",
+        "Off-balance impact",
+        "Knees collapsing inward"
+      ]
+    },
+    {
+      "poolNumber": 7,
+      "previousNumber": 7,
+      "id": "1qkhbmd_Critique_my_swing_but_don_t_be_nice_Critique_my_swing_but_do_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1qkhbmd_Critique_my_swing_but_don_t_be_nice_Critique_my_swing_but_do_cut.mp4",
+      "faults": [
+        "Head vs ball",
+        "Stance distance to ball",
+        "Arms reach extreme"
+      ]
+    },
+    {
+      "poolNumber": 8,
+      "previousNumber": 8,
+      "id": "1qxu56j_14_HCP_Want_to_break_80_this_year_Any_tips_14_HCP_Want_to_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1qxu56j_14_HCP_Want_to_break_80_this_year_Any_tips_14_HCP_Want_to_cut.mp4",
+      "faults": [
+        "Arms disconnected",
+        "Fall toward ball",
+        "Overly straight posture"
+      ]
+    },
+    {
+      "poolNumber": 9,
+      "previousNumber": 9,
+      "id": "1r9n9ss_Swing_from_before_and_after_I_found_this_subSwing_from_befor_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1r9n9ss_Swing_from_before_and_after_I_found_this_subSwing_from_befor_cut.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Knee flex issues",
+        "Spine tilt at finish"
+      ]
+    },
+    {
+      "poolNumber": 10,
+      "previousNumber": 10,
+      "id": "1rhl2tz_Rate_my_swing_1-10Rate_my_swing_1-10_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1rhl2tz_Rate_my_swing_1-10Rate_my_swing_1-10_cut.mp4",
+      "faults": [
+        "Head lift or dip",
+        "Under-swing",
+        "Club finishes low"
+      ]
+    },
+    {
+      "poolNumber": 11,
+      "previousNumber": 11,
+      "id": "1s0oydb_Updated_video_for_my_golf_swing_i_uploaded_here_like_3_mont_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1s0oydb_Updated_video_for_my_golf_swing_i_uploaded_here_like_3_mont_cut.mp4",
+      "faults": [
+        "Excessive spine tilt",
+        "Arms disconnected",
+        "Fall toward ball"
+      ]
+    },
+    {
+      "poolNumber": 12,
+      "previousNumber": 12,
+      "id": "1s86cvt_18_Month_swing_progression_of_a_golf_addict_18_Month_swing_p_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1s86cvt_18_Month_swing_progression_of_a_golf_addict_18_Month_swing_p_cut.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Forearm roll",
+        "Shoulders vs feet"
+      ]
+    },
+    {
+      "poolNumber": 13,
+      "previousNumber": 13,
+      "id": "1si97tk_Critique_my_swingCritique_my_swing_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1si97tk_Critique_my_swingCritique_my_swing_cut.mp4",
+      "faults": [
+        "Excessive spine tilt",
+        "Head lift or dip",
+        "Fall toward ball"
+      ]
+    },
+    {
+      "poolNumber": 14,
+      "previousNumber": 14,
+      "id": "1tbsi3y_Six_months_in_how_can_I_improve_my_driver_swing_Six_months_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1tbsi3y_Six_months_in_how_can_I_improve_my_driver_swing_Six_months_cut.mp4",
+      "faults": [
+        "Knee flex issues",
+        "Hands flip",
+        "Forearm roll"
+      ]
+    },
+    {
+      "poolNumber": 15,
+      "previousNumber": 15,
+      "id": "1tghza6_HelpHelp_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1tghza6_HelpHelp_cut.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Knee flex issues",
+        "Fall backward"
+      ]
+    },
+    {
+      "poolNumber": 16,
+      "previousNumber": 16,
+      "id": "1tqtgz8_Rate_my_swing_guess_my_HCP_and_guess_my_missRate_my_swing_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1tqtgz8_Rate_my_swing_guess_my_HCP_and_guess_my_missRate_my_swing_cut.mp4",
+      "faults": [
+        "Head vs ball",
+        "Open or closed stance",
+        "Stance distance to ball"
+      ]
+    },
+    {
+      "poolNumber": 17,
+      "previousNumber": 17,
+      "id": "1tuekai_Rate_my_swingRate_my_swing_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1tuekai_Rate_my_swingRate_my_swing_cut.mp4",
+      "faults": [
+        "Forearm roll",
+        "Head dives",
+        "Unbalanced finish"
+      ]
+    },
+    {
+      "poolNumber": 18,
+      "previousNumber": 18,
+      "id": "1turrrp_Swing_tipsSwing_tips_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1turrrp_Swing_tipsSwing_tips_cut.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Lateral slide",
+        "Lateral sway backswing"
+      ]
+    },
+    {
+      "poolNumber": 19,
+      "previousNumber": 19,
+      "id": "1u0o562_Swing_ChangesSwing_Changes_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1u0o562_Swing_ChangesSwing_Changes_cut.mp4",
+      "faults": [
+        "Excessive spine tilt",
+        "Arms disconnected",
+        "Head lift or dip"
+      ]
+    },
+    {
+      "poolNumber": 20,
+      "previousNumber": 20,
+      "id": "1u0rpf1_hls_cut",
+      "source": "reddit",
+      "videoRef": "$SURVER/data/survey_pool/reddit/1u0rpf1_hls_cut.mp4",
+      "faults": [
+        "Weight on toes",
+        "Forearm roll",
+        "Shoulders vs feet"
+      ]
+    },
+    {
+      "poolNumber": 21,
+      "previousNumber": 21,
+      "id": "801",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/801.mp4",
+      "faults": [
+        "Knee flex issues",
+        "Head vs ball",
+        "Upper body leads"
+      ]
+    },
+    {
+      "poolNumber": 22,
+      "previousNumber": 22,
+      "id": "805",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/805.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Lack of rotation",
+        "Shoulders vs feet"
+      ]
+    },
+    {
+      "poolNumber": 23,
+      "previousNumber": 23,
+      "id": "806",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/806.mp4",
+      "faults": [
+        "Hands flip",
+        "Head backs away",
+        "No wrist hinge"
+      ]
+    },
+    {
+      "poolNumber": 24,
+      "previousNumber": 25,
+      "id": "809",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/809.mp4",
+      "faults": [
+        "Arms disconnected",
+        "Excessive spine tilt",
+        "Fall toward ball"
+      ]
+    },
+    {
+      "poolNumber": 25,
+      "previousNumber": 26,
+      "id": "810",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/810.mp4",
+      "faults": [
+        "Excessive spine tilt",
+        "Fall toward ball",
+        "Arms disconnected"
+      ]
+    },
+    {
+      "poolNumber": 26,
+      "previousNumber": 27,
+      "id": "812",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/812.mp4",
+      "faults": [
+        "Hands flip",
+        "Head backs away",
+        "No wrist hinge"
+      ]
+    },
+    {
+      "poolNumber": 27,
+      "previousNumber": 28,
+      "id": "814",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/814.mp4",
+      "faults": [
+        "Forearm roll",
+        "Shoulders vs feet",
+        "Lead heel lift"
+      ]
+    },
+    {
+      "poolNumber": 28,
+      "previousNumber": 29,
+      "id": "816",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/816.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Forearm roll",
+        "Knee flex issues"
+      ]
+    },
+    {
+      "poolNumber": 29,
+      "previousNumber": 30,
+      "id": "819",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/819.mp4",
+      "faults": [
+        "Forearm roll",
+        "Shoulders vs feet",
+        "Lateral slide"
+      ]
+    },
+    {
+      "poolNumber": 30,
+      "previousNumber": 31,
+      "id": "823",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/823.mp4",
+      "faults": [
+        "Forearm roll",
+        "Clubface closed",
+        "Loss of lag"
+      ]
+    },
+    {
+      "poolNumber": 31,
+      "previousNumber": 32,
+      "id": "824",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/824.mp4",
+      "faults": [
+        "Excessive spine tilt",
+        "Head lift or dip",
+        "Fall toward ball"
+      ]
+    },
+    {
+      "poolNumber": 32,
+      "previousNumber": 33,
+      "id": "825",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/825.mp4",
+      "faults": [
+        "Knee flex issues",
+        "Lead heel lift",
+        "Knee collapse inward"
+      ]
+    },
+    {
+      "poolNumber": 33,
+      "previousNumber": 34,
+      "id": "826",
+      "source": "golfdb",
+      "videoRef": "$SURVER/data/survey_pool/golfdb/826.mp4",
+      "faults": [
+        "Excessive spine tilt",
+        "Head lift or dip",
+        "Head dives"
+      ]
+    },
+    {
+      "poolNumber": 34,
+      "previousNumber": 35,
+      "id": "swing-1",
+      "source": "og",
+      "videoRef": "$SURVER/data/survey_pool/og/swing-1.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Knee collapse inward",
+        "Spine tilt at finish"
+      ]
+    },
+    {
+      "poolNumber": 35,
+      "previousNumber": 36,
+      "id": "swing-2",
+      "source": "og",
+      "videoRef": "$SURVER/data/survey_pool/og/swing-2.mp4",
+      "faults": [
+        "Knee collapse inward",
+        "Lead heel lift",
+        "Early arm separation"
+      ]
+    },
+    {
+      "poolNumber": 36,
+      "previousNumber": 37,
+      "id": "swing-3",
+      "source": "og",
+      "videoRef": "$SURVER/data/survey_pool/og/swing-3.mp4",
+      "faults": [
+        "Weight not on lead",
+        "Head lurch",
+        "Loss of lag"
+      ]
+    },
+    {
+      "poolNumber": 37,
+      "previousNumber": 38,
+      "id": "swing-4",
+      "source": "og",
+      "videoRef": "$SURVER/data/survey_pool/og/swing-4.mp4",
+      "faults": [
+        "Lead heel lift",
+        "Spine tilt at finish",
+        "Lateral sway"
+      ]
+    },
+    {
+      "poolNumber": 38,
+      "previousNumber": 39,
+      "id": "swing-5",
+      "source": "og",
+      "videoRef": "$SURVER/data/survey_pool/og/swing-5.mp4",
+      "faults": [
+        "Weight not on lead",
+        "Hands too far forward",
+        "Fat contact"
+      ]
+    },
+    {
+      "poolNumber": 39,
+      "previousNumber": 40,
+      "id": "swing-6",
+      "source": "og",
+      "videoRef": "$SURVER/data/survey_pool/og/swing-6.mp4",
+      "faults": [
+        "Knees collapsing inward",
+        "Early wrist hinge",
+        "Club outside early"
+      ]
+    }
+  ]
+}

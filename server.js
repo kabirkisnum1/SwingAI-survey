@@ -26,6 +26,7 @@ const surveySession = require("./lib/surveySession");
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const RESPONSES_FILE = path.join(ROOT, "data", "responses.jsonl");
+const PARTIALS_DIR = path.join(ROOT, "data", "partials");
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_TABLE = "survey_responses";
@@ -168,7 +169,9 @@ function serveStatic(req, res, filePath) {
 
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME[ext] || "application/octet-stream";
-    const isSurveyMedia = filePath.includes(`${path.sep}data${path.sep}media${path.sep}`);
+    const isSurveyMedia =
+      filePath.includes(`${path.sep}data${path.sep}media${path.sep}`) ||
+      filePath.includes(`${path.sep}data${path.sep}survey_pool${path.sep}`);
     const cacheHeader = isSurveyMedia
       ? { "Cache-Control": "public, max-age=31536000, immutable" }
       : {};
@@ -218,6 +221,52 @@ async function handleApi(req, res, urlPath) {
     return;
   }
 
+  if (req.method === "POST" && urlPath === "/api/progress") {
+    try {
+      const body = JSON.parse(await readBody(req));
+      if (!body.sessionId || !Array.isArray(body.swings)) {
+        jsonResponse(res, 400, { error: "sessionId and swings required" });
+        return;
+      }
+      fs.mkdirSync(PARTIALS_DIR, { recursive: true });
+      const partial = {
+        ...body,
+        savedAt: new Date().toISOString(),
+        submittedAt: body.submittedAt || null,
+      };
+      fs.writeFileSync(
+        path.join(PARTIALS_DIR, `${body.sessionId}.json`),
+        JSON.stringify(partial, null, 2)
+      );
+      jsonResponse(res, 200, { ok: true });
+    } catch (err) {
+      console.error("POST /api/progress failed:", err);
+      jsonResponse(res, 500, { error: "Failed to save progress" });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && urlPath === "/api/progress") {
+    try {
+      const query = new URL(req.url, "http://localhost").searchParams;
+      const sessionId = query.get("sessionId") || "";
+      if (!sessionId) {
+        jsonResponse(res, 400, { error: "sessionId required" });
+        return;
+      }
+      const p = path.join(PARTIALS_DIR, `${sessionId}.json`);
+      if (!fs.existsSync(p)) {
+        jsonResponse(res, 404, { error: "No saved progress" });
+        return;
+      }
+      jsonResponse(res, 200, JSON.parse(fs.readFileSync(p, "utf8")));
+    } catch (err) {
+      console.error("GET /api/progress failed:", err);
+      jsonResponse(res, 500, { error: "Failed to load progress" });
+    }
+    return;
+  }
+
   if (req.method === "POST" && urlPath === "/api/responses") {
     try {
       const body = JSON.parse(await readBody(req));
@@ -234,6 +283,10 @@ async function handleApi(req, res, urlPath) {
       };
 
       await saveResponse(entry);
+      if (body.sessionId) {
+        const partialPath = path.join(PARTIALS_DIR, `${body.sessionId}.json`);
+        if (fs.existsSync(partialPath)) fs.unlinkSync(partialPath);
+      }
       jsonResponse(res, 200, { ok: true, id: entry.id });
     } catch (err) {
       if (err instanceof SyntaxError || err.message === "Invalid JSON") {
