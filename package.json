@@ -7,7 +7,9 @@
     "start": "node server.js",
     "build-catalog": "node scripts/build_survey_catalog.js",
     "bundle-media": "node scripts/bundle_survey_media.js",
-    "prepare-survey": "npm run build-catalog && npm run bundle-media"
+    "compress-media": "node scripts/compress_survey_media.js",
+    "prepare-survey": "npm run build-catalog && npm run bundle-media",
+    "prepare-survey-github": "npm run prepare-survey && npm run compress-media"
   },
   "engines": {
     "node": ">=18"

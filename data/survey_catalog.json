@@ -25186,5 +25186,11 @@
     "golfdb": 849
   },
   "bundledAt": "2026-06-12T00:00:23.477Z",
-  "mediaRoot": "data/media"
+  "mediaRoot": "data/media",
+  "mediaCompressed": true,
+  "mediaCompressedAt": "2026-06-12T00:08:23.265Z",
+  "mediaCompress": {
+    "maxWidth": 720,
+    "crf": 28
+  }
 }
