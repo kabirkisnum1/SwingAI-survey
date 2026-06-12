@@ -199,9 +199,13 @@ function renderResponses() {
 
   if (count > 0) {
     const latest = [...responses].sort(
-      (a, b) => new Date(b.submittedAt || b.receivedAt) - new Date(a.submittedAt || a.receivedAt)
+      (a, b) =>
+        new Date(b.submittedAt || b.savedAt || b.receivedAt) -
+        new Date(a.submittedAt || a.savedAt || a.receivedAt)
     )[0];
-    statLatest.textContent = formatDateShort(latest.submittedAt || latest.receivedAt);
+    statLatest.textContent = formatDateShort(
+      latest.submittedAt || latest.savedAt || latest.receivedAt
+    );
   }
 
   const showEmpty = filtered.length === 0;
@@ -225,12 +229,20 @@ function renderResponses() {
   filtered.forEach((entry) => {
     const name = entry.participant?.name || "Anonymous";
     const position = entry.participant?.position || "";
-    const submitted = entry.submittedAt || entry.receivedAt;
+    const inProgress = Boolean(entry.inProgress);
+    const activityAt = entry.submittedAt || entry.savedAt || entry.receivedAt;
     const swingCount = entry.swings?.length || 0;
+    const filledSwings = (entry.swings || []).filter(
+      (sw) =>
+        sw.observedFaults?.trim() ||
+        sw.feedback?.trim() ||
+        sw.additionalThoughts?.trim() ||
+        (sw.faultRatings || []).some((r) => r.response)
+    ).length;
     const swingsHtml = (entry.swings || []).map(renderSwingBlock).join("");
 
     const card = document.createElement("article");
-    card.className = "response-card";
+    card.className = `response-card${inProgress ? " is-in-progress" : ""}`;
     card.innerHTML = `
       <button type="button" class="response-toggle" aria-expanded="false">
         <div class="response-summary">
@@ -238,7 +250,10 @@ function renderResponses() {
           <div class="response-summary-text">
             <strong class="response-name">${escapeHtml(name)}</strong>
             ${position ? `<span class="response-role">${escapeHtml(position)}</span>` : ""}
-            <span class="response-meta">${formatDate(submitted)} · ${plural(swingCount, "swing")}</span>
+            <span class="response-meta">
+              ${inProgress ? `<span class="status-pill status-pill-progress">In progress</span> · ` : ""}
+              ${formatDate(activityAt)} · ${plural(swingCount, "swing")}${inProgress && filledSwings ? ` · ${filledSwings} started` : ""}
+            </span>
           </div>
         </div>
         <span class="chevron chevron-lg" aria-hidden="true">›</span>
@@ -250,7 +265,8 @@ function renderResponses() {
             <dl class="detail-grid">
               <div><dt>Name</dt><dd>${escapeHtml(name)}</dd></div>
               <div><dt>Role / position</dt><dd>${position ? escapeHtml(position) : '<em class="muted">Not provided</em>'}</dd></div>
-              <div><dt>Submitted</dt><dd>${formatDate(submitted)}</dd></div>
+              <div><dt>${inProgress ? "Last saved" : "Submitted"}</dt><dd>${formatDate(activityAt)}</dd></div>
+              ${inProgress ? '<div><dt>Status</dt><dd><span class="status-pill status-pill-progress">In progress — not yet submitted</span></dd></div>' : ""}
             </dl>
           </section>
           <section class="detail-section">
