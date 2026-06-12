@@ -288,7 +288,6 @@ def process_video(
         after = ffprobe_duration(tmp)
 
         if n_before >= 2:
-            pose_cache.unlink(missing_ok=True)
             pose2, probs2, _fps2, _step2 = extract_pose_probs(tmp, ctx, pose_cache)
             segments2 = detect_segments(pose2, probs2)
             meta["nSegmentsAfter"] = len(segments2)
@@ -300,8 +299,6 @@ def process_video(
                 return "exclude", before, after, {**meta, "reason": "still_multi_swing_after_trim"}
 
         tmp.replace(path)
-        if pose_cache.is_file() and n_before < 2:
-            pose_cache.unlink(missing_ok=True)
         after = ffprobe_duration(path)
         meta["durationAfter"] = after
         meta["multiSwingBefore"] = n_before >= 2
