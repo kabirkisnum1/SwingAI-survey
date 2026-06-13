@@ -495,19 +495,9 @@ function buildPages() {
           <div class="form-group">
             <label for="observedFaults-${swingNum}">Faults you observed</label>
             <textarea id="observedFaults-${swingNum}" placeholder="e.g. Early extension, over-the-top, weak grip...">${escapeHtml(responses.swings[i].observedFaults)}</textarea>
-            <div class="error-message" id="observedError-${swingNum}">Please list at least one fault.</div>
           </div>
         </div>
       `,
-      validate: () => {
-        const value = document.getElementById(`observedFaults-${swingNum}`).value.trim();
-        const errorEl = document.getElementById(`observedError-${swingNum}`);
-        errorEl.classList.toggle("visible", !value);
-        if (!value) return false;
-        responses.swings[i].observedFaults = value;
-        saveResponses();
-        return true;
-      },
       collect: () => {
         responses.swings[i].observedFaults = document.getElementById(`observedFaults-${swingNum}`).value.trim();
         saveResponses();
@@ -522,8 +512,7 @@ function buildPages() {
       render: () => `
         <div class="page active" data-page="swing-${swingNum}-app-faults">
           <span class="swing-badge">Swing ${swingNum} of ${SWING_COUNT}</span>
-          <h1 class="page-title">The faults the app found were:</h1>
-          <p class="page-subtitle">Rate each fault. Disagree if it wasn't in the swing; Error in fault if the definition itself is wrong.</p>
+          <p class="page-instructions">Rate each fault the app found for this swing. Choose <strong>Agree</strong> if the fault was present and correctly identified, <strong>Disagree</strong> if it wasn't in the swing, or <strong>Error in fault</strong> if how we've defined the fault is wrong — if you pick that last option, explain what's incorrect about the definition.</p>
 
           ${renderAppFaults(i, swingNum)}
 
