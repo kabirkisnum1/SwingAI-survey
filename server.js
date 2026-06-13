@@ -101,15 +101,50 @@ function readAllPartialsLocal() {
 
 function normalizeResponseEntry(raw, extra = {}) {
   const sessionId = raw.sessionId || raw.id || null;
-  const submittedAt = raw.submittedAt || null;
+  const submittedAt = raw.submittedAt ?? null;
+  const inProgress = extra.inProgress ?? Boolean(!submittedAt && raw.inProgress !== false);
   return {
+    ...raw,
     id: sessionId || raw.id || crypto.randomUUID(),
+    sessionId,
     receivedAt: raw.receivedAt || raw.savedAt || raw.startedAt || new Date().toISOString(),
     savedAt: raw.savedAt || null,
-    ...raw,
-    sessionId,
-    submittedAt,
-    inProgress: extra.inProgress ?? !submittedAt,
+    submittedAt: inProgress ? null : submittedAt,
+    inProgress,
+  };
+}
+
+function writePartialFileSafe(normalized) {
+  if (useSupabase || !normalized.inProgress || !normalized.sessionId) return;
+  try {
+    fs.mkdirSync(PARTIALS_DIR, { recursive: true });
+    fs.writeFileSync(
+      path.join(PARTIALS_DIR, `${normalized.sessionId}.json`),
+      JSON.stringify(normalized, null, 2)
+    );
+  } catch (err) {
+    console.warn("Partial file write skipped:", err.message);
+  }
+}
+
+function deletePartialFileSafe(sessionId) {
+  if (!sessionId) return;
+  try {
+    const partialPath = path.join(PARTIALS_DIR, `${sessionId}.json`);
+    if (fs.existsSync(partialPath)) fs.unlinkSync(partialPath);
+  } catch (err) {
+    console.warn("Partial file delete skipped:", err.message);
+  }
+}
+
+function supabaseRowFromEntry(normalized) {
+  // submitted_at may be NOT NULL in Supabase — use received_at as placeholder while in progress.
+  const submittedAt = normalized.submittedAt || normalized.receivedAt;
+  return {
+    id: normalized.id,
+    received_at: normalized.receivedAt,
+    submitted_at: submittedAt,
+    payload: normalized,
   };
 }
 
@@ -167,50 +202,55 @@ async function readAllResponses() {
         ...row.payload,
         id: row.id,
         receivedAt: row.received_at,
-        submittedAt: row.submitted_at || row.payload?.submittedAt || null,
+        submittedAt: row.payload?.submittedAt || null,
+        inProgress: Boolean(row.payload?.inProgress),
       },
-      { inProgress: !row.submitted_at && !row.payload?.submittedAt }
+      { inProgress: Boolean(row.payload?.inProgress) }
     )
   );
 }
 
 async function upsertResponse(entry) {
   const normalized = normalizeResponseEntry(entry);
-
-  if (normalized.inProgress && normalized.sessionId) {
-    fs.mkdirSync(PARTIALS_DIR, { recursive: true });
-    fs.writeFileSync(
-      path.join(PARTIALS_DIR, `${normalized.sessionId}.json`),
-      JSON.stringify(normalized, null, 2)
-    );
-  }
+  writePartialFileSafe(normalized);
 
   if (!useSupabase) {
     if (normalized.inProgress) return;
     ensureDataDir();
     fs.appendFileSync(RESPONSES_FILE, JSON.stringify(normalized) + "\n");
-    if (normalized.sessionId) {
-      const partialPath = path.join(PARTIALS_DIR, `${normalized.sessionId}.json`);
-      if (fs.existsSync(partialPath)) fs.unlinkSync(partialPath);
-    }
+    deletePartialFileSafe(normalized.sessionId);
     return;
   }
 
-  const { error } = await supabase.from(SUPABASE_TABLE).upsert({
-    id: normalized.id,
-    received_at: normalized.receivedAt,
-    submitted_at: normalized.submittedAt,
-    payload: normalized,
-  });
+  const row = supabaseRowFromEntry(normalized);
+  const { data: existing, error: lookupError } = await supabase
+    .from(SUPABASE_TABLE)
+    .select("id")
+    .eq("id", row.id)
+    .maybeSingle();
 
-  if (error) {
-    console.error("Supabase upsert failed:", error.message, error.details || "", error.hint || "");
-    throw error;
+  if (lookupError) {
+    console.error("Supabase lookup failed:", lookupError.message, lookupError.details || "");
+    throw lookupError;
   }
 
-  if (!normalized.inProgress && normalized.sessionId) {
-    const partialPath = path.join(PARTIALS_DIR, `${normalized.sessionId}.json`);
-    if (fs.existsSync(partialPath)) fs.unlinkSync(partialPath);
+  const writeResult = existing
+    ? await supabase.from(SUPABASE_TABLE).update(row).eq("id", row.id)
+    : await supabase.from(SUPABASE_TABLE).insert(row);
+
+  if (writeResult.error) {
+    console.error(
+      "Supabase write failed:",
+      writeResult.error.message,
+      writeResult.error.details || "",
+      writeResult.error.hint || "",
+      writeResult.error.code || ""
+    );
+    throw writeResult.error;
+  }
+
+  if (!normalized.inProgress) {
+    deletePartialFileSafe(normalized.sessionId);
   }
 }
 
@@ -349,7 +389,7 @@ async function handleApi(req, res, urlPath) {
           .eq("id", sessionId)
           .maybeSingle();
         if (error) throw error;
-        if (data?.payload && !data.submitted_at && !data.payload.submittedAt) {
+        if (data?.payload?.inProgress) {
           jsonResponse(res, 200, data.payload);
           return;
         }
