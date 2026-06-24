@@ -22,6 +22,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 const surveySession = require("./lib/surveySession");
+const { createResponseStore } = require("./lib/responseStore");
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
@@ -29,12 +30,15 @@ const RESPONSES_FILE = path.join(ROOT, "data", "responses.jsonl");
 const PARTIALS_DIR = path.join(ROOT, "data", "partials");
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const SUPABASE_TABLE = "survey_responses";
 const useSupabase = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
 
 const supabase = useSupabase
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
   : null;
+
+const responseStore = createResponseStore({ supabase });
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -81,181 +85,6 @@ function setCors(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-}
-
-function readAllPartialsLocal() {
-  if (!fs.existsSync(PARTIALS_DIR)) return [];
-  return fs
-    .readdirSync(PARTIALS_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => {
-      try {
-        return JSON.parse(fs.readFileSync(path.join(PARTIALS_DIR, f), "utf8"));
-      } catch {
-        return null;
-      }
-    })
-    .filter(Boolean)
-    .map((partial) => normalizeResponseEntry(partial, { inProgress: true }));
-}
-
-function normalizeResponseEntry(raw, extra = {}) {
-  const sessionId = raw.sessionId || raw.id || null;
-  const submittedAt = raw.submittedAt ?? null;
-  const inProgress = extra.inProgress ?? Boolean(!submittedAt && raw.inProgress !== false);
-  return {
-    ...raw,
-    id: sessionId || raw.id || crypto.randomUUID(),
-    sessionId,
-    receivedAt: raw.receivedAt || raw.savedAt || raw.startedAt || new Date().toISOString(),
-    savedAt: raw.savedAt || null,
-    submittedAt: inProgress ? null : submittedAt,
-    inProgress,
-  };
-}
-
-function writePartialFileSafe(normalized) {
-  if (useSupabase || !normalized.inProgress || !normalized.sessionId) return;
-  try {
-    fs.mkdirSync(PARTIALS_DIR, { recursive: true });
-    fs.writeFileSync(
-      path.join(PARTIALS_DIR, `${normalized.sessionId}.json`),
-      JSON.stringify(normalized, null, 2)
-    );
-  } catch (err) {
-    console.warn("Partial file write skipped:", err.message);
-  }
-}
-
-function deletePartialFileSafe(sessionId) {
-  if (!sessionId) return;
-  try {
-    const partialPath = path.join(PARTIALS_DIR, `${sessionId}.json`);
-    if (fs.existsSync(partialPath)) fs.unlinkSync(partialPath);
-  } catch (err) {
-    console.warn("Partial file delete skipped:", err.message);
-  }
-}
-
-function supabaseRowFromEntry(normalized) {
-  // submitted_at may be NOT NULL in Supabase — use received_at as placeholder while in progress.
-  const submittedAt = normalized.submittedAt || normalized.receivedAt;
-  return {
-    id: normalized.id,
-    received_at: normalized.receivedAt,
-    submitted_at: submittedAt,
-    payload: normalized,
-  };
-}
-
-function mergeResponses(completed, partials) {
-  const byKey = new Map();
-  for (const entry of partials) {
-    const key = entry.sessionId || entry.id;
-    if (key) byKey.set(key, entry);
-  }
-  for (const entry of completed) {
-    const key = entry.sessionId || entry.id;
-    if (key) {
-      byKey.set(key, { ...entry, inProgress: false });
-    } else {
-      byKey.set(entry.id, { ...entry, inProgress: false });
-    }
-  }
-  return [...byKey.values()].sort(
-    (a, b) =>
-      new Date(b.submittedAt || b.savedAt || b.receivedAt) -
-      new Date(a.submittedAt || a.savedAt || a.receivedAt)
-  );
-}
-
-function readAllResponsesLocal() {
-  const completed = [];
-  if (fs.existsSync(RESPONSES_FILE)) {
-    for (const line of fs.readFileSync(RESPONSES_FILE, "utf8").split("\n")) {
-      if (!line) continue;
-      try {
-        completed.push(normalizeResponseEntry(JSON.parse(line), { inProgress: false }));
-      } catch {
-        // skip bad lines
-      }
-    }
-  }
-  return mergeResponses(completed.reverse(), readAllPartialsLocal());
-}
-
-async function readAllResponses() {
-  if (!useSupabase) return readAllResponsesLocal();
-
-  const { data, error } = await supabase
-    .from(SUPABASE_TABLE)
-    .select("id, received_at, submitted_at, payload")
-    .order("received_at", { ascending: false });
-
-  if (error) {
-    console.error("Supabase read failed:", error.message, error.details || "", error.hint || "");
-    throw error;
-  }
-  return (data || []).map((row) =>
-    normalizeResponseEntry(
-      {
-        ...row.payload,
-        id: row.id,
-        receivedAt: row.received_at,
-        submittedAt: row.payload?.submittedAt || null,
-        inProgress: Boolean(row.payload?.inProgress),
-      },
-      { inProgress: Boolean(row.payload?.inProgress) }
-    )
-  );
-}
-
-async function upsertResponse(entry) {
-  const normalized = normalizeResponseEntry(entry);
-  writePartialFileSafe(normalized);
-
-  if (!useSupabase) {
-    if (normalized.inProgress) return;
-    ensureDataDir();
-    fs.appendFileSync(RESPONSES_FILE, JSON.stringify(normalized) + "\n");
-    deletePartialFileSafe(normalized.sessionId);
-    return;
-  }
-
-  const row = supabaseRowFromEntry(normalized);
-  const { data: existing, error: lookupError } = await supabase
-    .from(SUPABASE_TABLE)
-    .select("id")
-    .eq("id", row.id)
-    .maybeSingle();
-
-  if (lookupError) {
-    console.error("Supabase lookup failed:", lookupError.message, lookupError.details || "");
-    throw lookupError;
-  }
-
-  const writeResult = existing
-    ? await supabase.from(SUPABASE_TABLE).update(row).eq("id", row.id)
-    : await supabase.from(SUPABASE_TABLE).insert(row);
-
-  if (writeResult.error) {
-    console.error(
-      "Supabase write failed:",
-      writeResult.error.message,
-      writeResult.error.details || "",
-      writeResult.error.hint || "",
-      writeResult.error.code || ""
-    );
-    throw writeResult.error;
-  }
-
-  if (!normalized.inProgress) {
-    deletePartialFileSafe(normalized.sessionId);
-  }
-}
-
-async function saveResponse(entry) {
-  await upsertResponse({ ...entry, submittedAt: entry.submittedAt || new Date().toISOString() });
 }
 
 function resolveStaticPath(urlPath) {
@@ -351,16 +180,16 @@ async function handleApi(req, res, urlPath) {
         jsonResponse(res, 400, { error: "sessionId and swings required" });
         return;
       }
-      const entry = normalizeResponseEntry(
+      await responseStore.save(
         {
           ...body,
           id: body.sessionId,
           savedAt: new Date().toISOString(),
           submittedAt: null,
+          inProgress: true,
         },
         { inProgress: true }
       );
-      await upsertResponse(entry);
       jsonResponse(res, 200, { ok: true });
     } catch (err) {
       console.error("POST /api/progress failed:", err);
@@ -377,24 +206,12 @@ async function handleApi(req, res, urlPath) {
         jsonResponse(res, 400, { error: "sessionId required" });
         return;
       }
-      const p = path.join(PARTIALS_DIR, `${sessionId}.json`);
-      if (fs.existsSync(p)) {
-        jsonResponse(res, 200, JSON.parse(fs.readFileSync(p, "utf8")));
+      const progress = await responseStore.readProgress(sessionId);
+      if (!progress) {
+        jsonResponse(res, 404, { error: "No saved progress" });
         return;
       }
-      if (useSupabase) {
-        const { data, error } = await supabase
-          .from(SUPABASE_TABLE)
-          .select("payload, submitted_at")
-          .eq("id", sessionId)
-          .maybeSingle();
-        if (error) throw error;
-        if (data?.payload?.inProgress) {
-          jsonResponse(res, 200, data.payload);
-          return;
-        }
-      }
-      jsonResponse(res, 404, { error: "No saved progress" });
+      jsonResponse(res, 200, progress);
     } catch (err) {
       console.error("GET /api/progress failed:", err);
       jsonResponse(res, 500, { error: "Failed to load progress" });
@@ -410,14 +227,16 @@ async function handleApi(req, res, urlPath) {
         return;
       }
 
-      const entry = normalizeResponseEntry({
-        id: body.sessionId || crypto.randomUUID(),
-        receivedAt: body.startedAt || new Date().toISOString(),
-        ...body,
-        submittedAt: body.submittedAt || new Date().toISOString(),
-      });
-
-      await saveResponse(entry);
+      const entry = await responseStore.save(
+        {
+          id: body.sessionId || crypto.randomUUID(),
+          receivedAt: body.startedAt || new Date().toISOString(),
+          ...body,
+          submittedAt: body.submittedAt || new Date().toISOString(),
+          inProgress: false,
+        },
+        { inProgress: false }
+      );
       jsonResponse(res, 200, { ok: true, id: entry.id });
     } catch (err) {
       if (err instanceof SyntaxError || err.message === "Invalid JSON") {
@@ -432,7 +251,7 @@ async function handleApi(req, res, urlPath) {
 
   if (req.method === "GET" && urlPath === "/api/responses") {
     try {
-      const responses = await readAllResponses();
+      const responses = await responseStore.readAll();
       jsonResponse(res, 200, responses);
     } catch (err) {
       console.error("GET /api/responses failed:", err);
@@ -496,11 +315,17 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (!useSupabase) ensureDataDir();
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`Survey (public):  http://localhost:${PORT}`);
   console.log(`Admin dashboard:    http://localhost:${PORT}/admin`);
   if (useSupabase) {
     console.log("Response storage:   Supabase (table: survey_responses)");
+    const ok = await responseStore.verifyConnection();
+    if (!ok) {
+      console.error(
+        "Supabase is configured but not reachable. Re-run supabase/schema.sql and verify SUPABASE_SERVICE_ROLE_KEY (not anon key)."
+      );
+    }
   } else {
     console.warn(
       "Response storage:   local file only — set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on Render for production"
