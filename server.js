@@ -249,6 +249,20 @@ async function handleApi(req, res, urlPath) {
     return;
   }
 
+  if (req.method === "GET" && urlPath === "/api/health") {
+    try {
+      const health = { ok: true, storage: useSupabase ? "supabase" : "local" };
+      if (useSupabase) {
+        health.supabase = await responseStore.verifyConnection();
+        health.ok = health.supabase;
+      }
+      jsonResponse(res, health.ok ? 200 : 503, health);
+    } catch (err) {
+      jsonResponse(res, 503, { ok: false, error: err.message });
+    }
+    return;
+  }
+
   if (req.method === "GET" && urlPath === "/api/responses") {
     try {
       const responses = await responseStore.readAll();
